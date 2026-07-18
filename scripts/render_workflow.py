@@ -39,7 +39,6 @@ jobs:
       PROJECT_FOUNDRY_PR_HEAD_REF: ${{{{ github.event.pull_request.head.ref || '' }}}}
       PROJECT_FOUNDRY_SYNTHETIC_MERGE_SHA: ${{{{ github.event.pull_request.merge_commit_sha || '' }}}}
       PROJECT_FOUNDRY_PUSH_BEFORE_SHA: ${{{{ github.event.before || '' }}}}
-      PROJECT_FOUNDRY_HOSTED_PROVENANCE_PATH: ${{{{ runner.temp }}}}/project-foundry-hosted-provenance.json
     steps:
       - name: Check out exact triggering head
         uses: actions/checkout@{CHECKOUT_PIN} # v6.0.3
@@ -68,7 +67,12 @@ jobs:
           python-version: "3.12"
 
       - name: Collect hosted provenance evidence
-        run: python scripts/collect_hosted_provenance.py --root . --output "$PROJECT_FOUNDRY_HOSTED_PROVENANCE_PATH"
+        shell: bash
+        run: |
+          set -euo pipefail
+          provenance_path="$RUNNER_TEMP/project-foundry-hosted-provenance.json"
+          python scripts/collect_hosted_provenance.py --root . --output "$provenance_path"
+          printf 'PROJECT_FOUNDRY_HOSTED_PROVENANCE_PATH=%s\n' "$provenance_path" >> "$GITHUB_ENV"
 
       - name: Run rendered view check
         run: python scripts/render_views.py --check --root .
