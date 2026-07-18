@@ -3,7 +3,16 @@
   "$id": "execution-program.v1",
   "type": "object",
   "additionalProperties": false,
-  "required": ["schema_version", "project_id", "north_star_id", "program_id", "program_version", "status", "work_packages", "tasks"],
+  "required": [
+    "schema_version",
+    "project_id",
+    "north_star_id",
+    "program_id",
+    "program_version",
+    "status",
+    "work_packages",
+    "tasks"
+  ],
   "properties": {
     "schema_version": {"const": "execution-program.v1"},
     "project_id": {"type": "string", "minLength": 1},
@@ -41,7 +50,25 @@
           "depends_on": {"type": "array", "items": {"type": "string", "minLength": 1}, "uniqueItems": true},
           "scope_ref": {"type": "string", "minLength": 1},
           "acceptance_criteria": {"type": "array", "items": {"type": "string", "minLength": 1}, "uniqueItems": true},
-          "evidence_refs": {"type": "array", "items": {"type": ["object", "string"]}, "uniqueItems": true},
+          "evidence_refs": {
+            "type": "array",
+            "items": {
+              "type": ["object", "string"],
+              "additionalProperties": false,
+              "required": ["receipt_type", "verification_type", "subject_kind", "repository", "ref", "subject_sha", "transition_from", "transition_to"],
+              "properties": {
+                "receipt_type": {"type": "string", "minLength": 1},
+                "verification_type": {"type": "string", "minLength": 1},
+                "subject_kind": {"type": "string", "minLength": 1},
+                "repository": {"type": "string", "minLength": 1},
+                "ref": {"type": "string", "minLength": 1},
+                "subject_sha": {"type": "string", "minLength": 1},
+                "transition_from": {"type": "string", "minLength": 1},
+                "transition_to": {"type": "string", "minLength": 1}
+              }
+            },
+            "uniqueItems": true
+          },
           "blocker": {
             "type": ["object", "null"],
             "additionalProperties": false,
