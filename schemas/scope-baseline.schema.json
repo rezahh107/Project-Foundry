@@ -1,0 +1,7 @@
+{
+  "$schema":"https://json-schema.org/draft/2020-12/schema",
+  "$id":"scope-baseline.v1",
+  "type":"object",
+  "required":["schema_version","project_id","north_star_id","scope_id","scope_version","status","included_work_package_ids","included_task_ids","active_task_id","explicit_exclusions","silent_scope_change_allowed"],
+  "properties":{"schema_version":{"const":"scope-baseline.v1"},"silent_scope_change_allowed":{"const":false}}
+}

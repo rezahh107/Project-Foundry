@@ -1,0 +1,9 @@
+[project]
+name = "project-foundry-foundation"
+version = "0.1.0"
+description = "Repository-native governance and validation foundation for Project Foundry"
+requires-python = ">=3.12"
+dependencies = []
+
+[tool.ruff]
+line-length = 100

@@ -1,0 +1,11 @@
+{
+  "$schema":"https://json-schema.org/draft/2020-12/schema",
+  "$id":"project-constitution.v1",
+  "type":"object",
+  "required":["schema_version","project_id","constitution_version","status","north_star","authority_model","operating_profile","constitutional_controls","completion_rule"],
+  "properties":{
+    "schema_version":{"const":"project-constitution.v1"},
+    "project_id":{"type":"string","minLength":1},
+    "north_star":{"type":"object","required":["id","statement","change_policy"],"properties":{"id":{"type":"string","minLength":1},"statement":{"type":"string","minLength":20},"change_policy":{"type":"string","minLength":1}}}
+  }
+}

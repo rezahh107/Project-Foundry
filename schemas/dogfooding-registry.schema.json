@@ -1,0 +1,7 @@
+{
+  "$schema":"https://json-schema.org/draft/2020-12/schema",
+  "$id":"dogfooding-registry.v1",
+  "type":"object",
+  "required":["schema_version","project_id","north_star_id","monitoring_mode","observations","lesson_candidates","promotions"],
+  "properties":{"schema_version":{"const":"dogfooding-registry.v1"},"observations":{"type":"array"},"lesson_candidates":{"type":"array"},"promotions":{"type":"array"}}
+}

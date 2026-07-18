@@ -1,0 +1,7 @@
+{
+  "$schema":"https://json-schema.org/draft/2020-12/schema",
+  "$id":"current-state.v1",
+  "type":"object",
+  "required":["schema_version","project_id","north_star_id","program_ref","scope_ref","state_version","phase","active_context_path","current_task_id","current_task_status","completed_task_ids","next_task_id","next_action","evidence_refs"],
+  "properties":{"schema_version":{"const":"current-state.v1"},"active_context_path":{"type":"array","minItems":4,"maxItems":4},"next_action":{"type":"string","minLength":10}}
+}

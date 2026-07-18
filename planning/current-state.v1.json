@@ -1,0 +1,19 @@
+{
+  "schema_version":"current-state.v1",
+  "project_id":"PROJECT-FOUNDRY",
+  "north_star_id":"PF-NORTH-STAR-001",
+  "program_ref":"PF-PROGRAM-001@0.1.0",
+  "scope_ref":"PF-SCOPE-001@0.1.0",
+  "state_version":"0.1.0",
+  "phase":"foundation_bootstrap",
+  "active_context_path":["PF-NORTH-STAR-001","PF-PROGRAM-001","WP-01","PF-001"],
+  "current_task_id":"PF-001",
+  "current_task_status":"implementation_submitted",
+  "completed_task_ids":[],
+  "blocked_task_ids":[],
+  "next_task_id":"PF-001",
+  "next_action":"Review and merge the foundation pull request, then verify the exact current main commit before marking PF-001 complete.",
+  "evidence_refs":[],
+  "uncertainties":["The final MVP dogfooding implementation method is intentionally not selected yet; PF-002 applies Decision Intelligence first."],
+  "last_transition":{"from":"planned","to":"implementation_submitted","reason":"Foundation implementation prepared on a dedicated branch.","evidence_refs":[]}
+}
