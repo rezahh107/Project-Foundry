@@ -7,9 +7,9 @@ import shutil
 import subprocess
 import sys
 import tempfile
-from contextlib import redirect_stderr, redirect_stdout
+from contextlib import contextmanager, redirect_stderr, redirect_stdout
 from pathlib import Path
-from typing import Any, Callable
+from typing import Any, Callable, Iterator
 
 from scripts.render_views import main as renderer_main
 from scripts.render_workflow import render_foundation_workflow
@@ -65,8 +65,45 @@ def apply_json_case(root: Path, case: dict[str, Any]) -> None:
     write_json(root, case["file"], document)
 
 
-def issue_codes(root: Path, *, current_main_sha: str | None = None) -> set[str]:
-    return {issue.code for issue in validate(root, current_main_sha=current_main_sha)}
+@contextmanager
+def patched_env(values: dict[str, str] | None = None) -> Iterator[None]:
+    values = values or {}
+    keys = set(values) | {
+        "PROJECT_FOUNDRY_EVENT_NAME",
+        "PROJECT_FOUNDRY_EXPECTED_HEAD_SHA",
+        "PROJECT_FOUNDRY_GITHUB_REF",
+        "PROJECT_FOUNDRY_PR_HEAD_SHA",
+        "PROJECT_FOUNDRY_PR_BASE_SHA",
+        "PROJECT_FOUNDRY_PR_HEAD_REF",
+        "PROJECT_FOUNDRY_SYNTHETIC_MERGE_SHA",
+        "PROJECT_FOUNDRY_PUSH_BEFORE_SHA",
+        "PROJECT_FOUNDRY_CURRENT_MAIN_SHA",
+    }
+    previous = {key: os.environ.get(key) for key in keys}
+    try:
+        for key in keys:
+            os.environ.pop(key, None)
+        os.environ.update(values)
+        yield
+    finally:
+        for key in keys:
+            os.environ.pop(key, None)
+        for key, value in previous.items():
+            if value is not None:
+                os.environ[key] = value
+
+
+def issue_codes(
+    root: Path,
+    *,
+    current_main_sha: str | None = None,
+    env: dict[str, str] | None = None,
+) -> set[str]:
+    values = dict(env or {})
+    if current_main_sha is not None:
+        values["PROJECT_FOUNDRY_CURRENT_MAIN_SHA"] = current_main_sha
+    with patched_env(values):
+        return {issue.code for issue in validate(root)}
 
 
 def run_cli(
@@ -74,23 +111,16 @@ def run_cli(
     script: str = "scripts/validate_repository.py",
     *args: str,
     current_main_sha: str | None = None,
+    env: dict[str, str] | None = None,
 ) -> subprocess.CompletedProcess[str]:
     stdout = io.StringIO()
     stderr = io.StringIO()
     main = renderer_main if script.endswith("render_views.py") else validator_main
-    previous = os.environ.get("PROJECT_FOUNDRY_CURRENT_MAIN_SHA")
-    try:
-        if current_main_sha is None:
-            os.environ.pop("PROJECT_FOUNDRY_CURRENT_MAIN_SHA", None)
-        else:
-            os.environ["PROJECT_FOUNDRY_CURRENT_MAIN_SHA"] = current_main_sha
-        with redirect_stdout(stdout), redirect_stderr(stderr):
-            returncode = main([*args, "--root", str(root)])
-    finally:
-        if previous is None:
-            os.environ.pop("PROJECT_FOUNDRY_CURRENT_MAIN_SHA", None)
-        else:
-            os.environ["PROJECT_FOUNDRY_CURRENT_MAIN_SHA"] = previous
+    values = dict(env or {})
+    if current_main_sha is not None:
+        values["PROJECT_FOUNDRY_CURRENT_MAIN_SHA"] = current_main_sha
+    with patched_env(values), redirect_stdout(stdout), redirect_stderr(stderr):
+        returncode = main([*args, "--root", str(root)])
     return subprocess.CompletedProcess([], returncode, stdout=stdout.getvalue(), stderr=stderr.getvalue())
 
 
@@ -99,12 +129,15 @@ def run_subprocess_cli(
     script: str,
     *args: str,
     current_main_sha: str | None = None,
+    env: dict[str, str] | None = None,
 ) -> subprocess.CompletedProcess[str]:
-    env = os.environ.copy()
-    if current_main_sha is None:
-        env.pop("PROJECT_FOUNDRY_CURRENT_MAIN_SHA", None)
-    else:
-        env["PROJECT_FOUNDRY_CURRENT_MAIN_SHA"] = current_main_sha
+    process_env = os.environ.copy()
+    for key in list(process_env):
+        if key.startswith("PROJECT_FOUNDRY_"):
+            process_env.pop(key, None)
+    if current_main_sha is not None:
+        process_env["PROJECT_FOUNDRY_CURRENT_MAIN_SHA"] = current_main_sha
+    process_env.update(env or {})
     return subprocess.run(
         [sys.executable, script, *args, "--root", "."],
         cwd=root,
@@ -112,7 +145,7 @@ def run_subprocess_cli(
         capture_output=True,
         check=False,
         timeout=30,
-        env=env,
+        env=process_env,
     )
 
 
