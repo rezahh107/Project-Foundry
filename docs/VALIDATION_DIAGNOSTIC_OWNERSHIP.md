@@ -1,54 +1,52 @@
 # Validation Diagnostic Ownership
 
-Each invalid-state class has one primary diagnostic owner. Structural validation establishes safe carrier shape; cross-document and Git-history semantics own repository identity, lifecycle provenance, dispatch, and evidence truth.
+Each invalid-state class has one primary owner. Structural validation protects carrier safety. Semantic validation owns repository-specific lifecycle, provenance, dependency, Scope, and evidence meaning.
 
 | Invariant | Primary owner | Public diagnostic |
 |---|---|---|
-| JSON syntax, types, required fields, object shape and `schema_version` | `STRUCTURAL_SCHEMA` | `PFV-101`, `PFV-110`–`PFV-116` |
+| JSON syntax, types, required fields, shape, and `schema_version` | `STRUCTURAL_SCHEMA` | `PFV-101`, `PFV-110`–`PFV-116` |
 | Canonical project and North Star identity | `CROSS_DOCUMENT_SEMANTICS` | `PFV-010`–`PFV-012` |
 | Work Package ↔ Task closure | `CROSS_DOCUMENT_SEMANTICS` | `PFV-029`–`PFV-031` |
-| Dependency graph and dependency readiness | `CROSS_DOCUMENT_SEMANTICS` | `PFV-032`, `PFV-033` |
-| Submitted status/transition internal agreement | `CROSS_DOCUMENT_SEMANTICS` | `PFV-034` |
-| Submitted transition versus trusted first-parent prior state | `GIT_HISTORY_SEMANTICS` | `PFV-035` |
-| Scope and next-task dispatch closure | `CROSS_DOCUMENT_SEMANTICS` | `PFV-044`–`PFV-046` |
-| Task/state/transition evidence carrier equality | `CROSS_DOCUMENT_SEMANTICS` | `PFV-082` |
+| Dependency graph and dependency satisfaction | `CROSS_DOCUMENT_SEMANTICS` | `PFV-032`, `PFV-033` |
+| Submitted lifecycle edge and current-state agreement | `CROSS_DOCUMENT_SEMANTICS` | `PFV-034` |
+| Submitted transition source versus trusted prior canonical status | `GIT_HISTORY_PROVENANCE` | `PFV-035` |
+| Integration parent structure, supported merge method, branch-state preservation, and exact main-push boundary | `INTEGRATION_BOUNDARY` | `PFV-036` |
+| Scope closure and next-task dispatch | `CROSS_DOCUMENT_SEMANTICS` | `PFV-044`–`PFV-046` |
+| Current Task/state/transition receipt-carrier equality | `CROSS_DOCUMENT_SEMANTICS` | `PFV-082` |
 | Completed and blocked progress closure | `CROSS_DOCUMENT_SEMANTICS` | `PFV-083` |
-| Branch-validation or merge evidence malformed, self-asserted or outside trusted Git context | `GIT_HISTORY_SEMANTICS` | `PFV-084` |
-| Current-main attestation self-referential, non-ancestral or outside trusted main context | `GIT_HISTORY_SEMANTICS` | `PFV-085` |
-| Decision Intelligence rules | `CROSS_DOCUMENT_SEMANTICS` | `PFV-060`–`PFV-069` |
-| Dogfooding authority and promotion | `CROSS_DOCUMENT_SEMANTICS` | `PFV-070`–`PFV-073` |
-| Deterministic workflow projection | workflow parity gate | `PFV-136` |
+| Current branch-validation receipt shape and PR context | `BRANCH_PROVENANCE` | `PFV-084` |
+| Current-main receipt shape and exact main-push context | `CURRENT_MAIN_PROVENANCE` | `PFV-085` |
+| Required predecessor receipt, receipt digest, historical exact-SHA CI, and transitive evidence-chain validity | `TRANSITIVE_EVIDENCE_CHAIN` | `PFV-086` |
+| Hosted Merge identity and Merge-receipt binding | `HOSTED_MERGE_TRUTH` | `PFV-087` |
+| Decision Intelligence process rules | `CROSS_DOCUMENT_SEMANTICS` | `PFV-060`–`PFV-069` |
+| Dogfooding authority and promotion rules | `CROSS_DOCUMENT_SEMANTICS` | `PFV-070`–`PFV-073` |
+| Deterministic workflow projection | `WORKFLOW_PARITY_GATE` | `PFV-136` |
 
-## Non-self-referential receipt
+## Supported integration policy
 
-Evidence-bearing lifecycle states use one structured `git_history_attestation` receipt containing:
+Only a GitHub-hosted two-parent merge commit is supported. Its authoritative identities are:
 
 ```text
-verification_type
-subject_kind
-repository
-ref
-subject_sha
-transition_from
-transition_to
+first parent  = previous main
+second parent = exact merged PR Head
+merge commit  = resulting main integration SHA
 ```
 
-`subject_sha` identifies the immutable commit immediately preceding the receipt transition. It must never equal the commit that contains the receipt. The validator derives the receipt/transition commit and the actual prior status from first-parent Git history.
+The canonical lifecycle files in the merge commit must be byte-identical to the second parent. Squash and rebase integrations are rejected with `PFV-036` because their one-parent Git shape cannot independently preserve and identify the merged PR lineage under this protocol.
 
-## Trust boundary
+## Receipt v2 contract
 
-- `git rev-parse HEAD` and `github.sha` identify the **validation commit**.
-- `github.event.pull_request.head.sha` identifies the exact checked-out PR Head; it is not current-main evidence.
-- `github.event.pull_request.base.sha` identifies the reviewed PR base; it is not post-Merge verification evidence.
-- `github.event.pull_request.merge_commit_sha` is treated as synthetic and never qualifies as a real Merge or current-main subject.
-- `github.event.before` is trusted only as the previous main commit for a push to `refs/heads/main`.
-- `subject_sha` must exist, be reachable from the validated history, match the transition predecessor, and remain on the required branch ancestry.
+Evidence-bearing transitions use one `git-history-attestation.v2` object. The receipt binds repository, exact ref, subject commit, transition edge, PR number, PR Head, integration commit, merge method, and the SHA-256 digest of its required predecessor receipt.
 
-## Lifecycle-specific meaning
+A status string is never evidence. The validator reconstructs the historical transition timeline, revalidates every predecessor receipt, and requires successful exact-SHA workflow evidence for historical evidence-bearing commits. A later green commit cannot launder an invalid earlier receipt.
 
-- `validated_on_branch`: the receipt commit is the exact observed PR Head; the subject is its previous branch commit and the ref is the exact PR branch.
-- `merged`: the subject is a real commit on main ancestry immediately before the Merge receipt transition.
-- `current_main_verified`: the subject is the previously existing `merged` receipt commit; a later verification receipt commit records the transition without embedding its own SHA.
-- Later main commits preserve historical evidence while the subject and transition remain ancestors of current `main`.
+## Hosted evidence boundary
 
-Structural shape alone never proves Git provenance. An arbitrary environment variable, free-form model assertion, PR Head or synthetic merge SHA is insufficient.
+`scripts/collect_hosted_provenance.py` reads public, read-only GitHub REST data without repository credentials. It writes a temporary evidence envelope under `RUNNER_TEMP`, outside the repository. Production hosted evidence is accepted only inside GitHub Actions, from that external runner-temporary path, with exact repository and schema identities. Test fixtures require `PROJECT_FOUNDRY_TEST_MODE=1`.
+
+## Test layers
+
+1. Structural tests assert `PFV-1xx` for carrier safety.
+2. Semantic tests assert stable repository-domain diagnostics.
+3. Real-Git tests create commits, branches, two-parent merges, multi-commit pushes, and receipt chains.
+4. Hosted-evidence fixtures test PR identity, workflow conclusions, direct-push rejection, and supported merge boundaries.
