@@ -1,6 +1,6 @@
 # Validation and Mutation Test Corpus
 
-The Foundation suite covers structural safety, Program/Scope closure, dependency graph and dispatch, lifecycle transitions, evidence-carrier diagnostics, real Git provenance, historical evidence preservation, Decision Intelligence, Dogfooding and workflow hardening.
+The Foundation suite covers structural safety, deterministic views, Program and Scope closure, dependency and dispatch rules, lifecycle transitions, Merge boundaries, transitive evidence chains, Decision Intelligence, Dogfooding, workflow hardening, and CLI boundaries.
 
 Diagnostic ownership is normative in `docs/VALIDATION_DIAGNOSTIC_OWNERSHIP.md`.
 
@@ -28,16 +28,22 @@ python -m unittest discover -s tests -v
 python -m compileall -q scripts tests
 ```
 
-## Real-Git integration contract
+## RR7 real-Git coverage
 
-`tests.test_git_provenance` creates temporary Git repositories with actual commits, feature branches, `--no-ff` Merge commits, receipt commits and later main commits. It verifies:
+`tests.test_git_provenance` creates actual temporary Git repositories and verifies:
 
-- a receipt cannot embed or precompute its own commit SHA;
-- PR base, PR Head, synthetic merge and unrelated SHAs cannot substitute for current-main provenance;
-- submitted `last_transition.from` must match the actual prior canonical status in first-parent history;
-- branch-validation, Merge and current-main receipts use distinct trust contexts;
-- a Merge subject followed by a Merge receipt and a current-main verification receipt is constructible;
-- historical evidence remains valid after later main commits;
-- verified completion of `PF-001` makes `PF-002` dispatch-eligible.
+- exact branch-validation receipts;
+- invalid branch-receipt laundering through later status commits;
+- latest-Head-only multi-commit pushes;
+- actual two-parent integration-commit push validation;
+- branch-state preservation at the integration boundary;
+- explicit squash/rebase rejection;
+- direct-push and synthetic-merge rejection;
+- hosted PR/merge identity binding;
+- predecessor-receipt SHA-256 chaining;
+- invalid Merge-receipt laundering;
+- valid end-to-end progression through `current_main_verified`;
+- historical-chain preservation after later unrelated commits;
+- `PF-001` completion making `PF-002` dispatch-eligible.
 
-Every invalid semantic case must exit non-zero through the real CLI, emit the intended stable diagnostic, omit `PFV-199`, and emit no traceback.
+Each invalid case must exit non-zero, emit its stable diagnostic, omit `PFV-199`, and emit no traceback.
