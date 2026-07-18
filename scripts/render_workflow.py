@@ -33,11 +33,13 @@ jobs:
       PROJECT_FOUNDRY_EVENT_NAME: ${{{{ github.event_name }}}}
       PROJECT_FOUNDRY_EXPECTED_HEAD_SHA: ${{{{ github.event.pull_request.head.sha || github.sha }}}}
       PROJECT_FOUNDRY_GITHUB_REF: ${{{{ github.ref }}}}
+      PROJECT_FOUNDRY_PR_NUMBER: ${{{{ github.event.pull_request.number || '' }}}}
       PROJECT_FOUNDRY_PR_HEAD_SHA: ${{{{ github.event.pull_request.head.sha || '' }}}}
       PROJECT_FOUNDRY_PR_BASE_SHA: ${{{{ github.event.pull_request.base.sha || '' }}}}
       PROJECT_FOUNDRY_PR_HEAD_REF: ${{{{ github.event.pull_request.head.ref || '' }}}}
       PROJECT_FOUNDRY_SYNTHETIC_MERGE_SHA: ${{{{ github.event.pull_request.merge_commit_sha || '' }}}}
       PROJECT_FOUNDRY_PUSH_BEFORE_SHA: ${{{{ github.event.before || '' }}}}
+      PROJECT_FOUNDRY_HOSTED_PROVENANCE_PATH: ${{{{ runner.temp }}}}/project-foundry-hosted-provenance.json
     steps:
       - name: Check out exact triggering head
         uses: actions/checkout@{CHECKOUT_PIN} # v6.0.3
@@ -64,6 +66,9 @@ jobs:
         uses: actions/setup-python@{SETUP_PYTHON_PIN} # v6 verified upstream commit
         with:
           python-version: "3.12"
+
+      - name: Collect hosted provenance evidence
+        run: python scripts/collect_hosted_provenance.py --root . --output "$PROJECT_FOUNDRY_HOSTED_PROVENANCE_PATH"
 
       - name: Run rendered view check
         run: python scripts/render_views.py --check --root .
@@ -128,7 +133,7 @@ jobs:
       - name: Test next-work dispatch rendering
         run: python -m unittest -v tests.test_dependency_lifecycle.NextWorkDispatchRenderingTests
 
-      - name: Test real Git provenance and forward progress
+      - name: Test merge boundaries and transitive provenance
         run: python -m unittest -v tests.test_git_provenance
 
       - name: Test semantic reference corpus
