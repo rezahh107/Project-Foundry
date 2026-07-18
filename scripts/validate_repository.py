@@ -3,25 +3,25 @@
 from __future__ import annotations
 
 import argparse
+import os
 import sys
 from pathlib import Path
 
 try:
     from scripts.render_views import render_all_from_documents
     from scripts.validation_core import RENDER_DIAGNOSTICS, REQUIRED_FILES, ValidationIssue
+    from scripts.validation_execution import validate_execution_controls
     from scripts.validation_semantics import load_and_validate_structures, validate_semantics
     from scripts.validation_workflow import validate_workflow
 except ModuleNotFoundError:
     from render_views import render_all_from_documents
     from validation_core import RENDER_DIAGNOSTICS, REQUIRED_FILES, ValidationIssue
+    from validation_execution import validate_execution_controls
     from validation_semantics import load_and_validate_structures, validate_semantics
     from validation_workflow import validate_workflow
 
 
-def _validate_rendered_views(
-    root: Path,
-    documents: dict[str, dict],
-) -> list[ValidationIssue]:
+def _validate_rendered_views(root: Path, documents: dict[str, dict]) -> list[ValidationIssue]:
     expected_views = render_all_from_documents(documents)
     issues: list[ValidationIssue] = []
     for relative, expected in expected_views.items():
@@ -40,7 +40,7 @@ def _validate_rendered_views(
     return issues
 
 
-def validate(root: Path) -> list[ValidationIssue]:
+def validate(root: Path, *, current_main_sha: str | None = None) -> list[ValidationIssue]:
     root = root.resolve()
     missing = [relative for relative in REQUIRED_FILES if not (root / relative).is_file()]
     if missing:
@@ -53,20 +53,40 @@ def validate(root: Path) -> list[ValidationIssue]:
     issues: list[ValidationIssue] = []
     try:
         issues.extend(validate_semantics(documents))
+        issues.extend(
+            validate_execution_controls(
+                documents,
+                current_main_sha=current_main_sha,
+            )
+        )
     except Exception as exc:
-        issues.append(ValidationIssue("PFV-199", f"unexpected semantic validator defect: {type(exc).__name__}: {exc}"))
-        return issues
+        return [
+            ValidationIssue(
+                "PFV-199",
+                f"unexpected semantic validator defect: {type(exc).__name__}: {exc}",
+            )
+        ]
     if issues:
         return issues
 
     try:
         issues.extend(_validate_rendered_views(root, documents))
     except Exception as exc:
-        issues.append(ValidationIssue("PFV-199", f"unexpected rendering validator defect: {type(exc).__name__}: {exc}"))
+        issues.append(
+            ValidationIssue(
+                "PFV-199",
+                f"unexpected rendering validator defect: {type(exc).__name__}: {exc}",
+            )
+        )
     try:
         issues.extend(validate_workflow(root))
     except Exception as exc:
-        issues.append(ValidationIssue("PFV-199", f"unexpected workflow validator defect: {type(exc).__name__}: {exc}"))
+        issues.append(
+            ValidationIssue(
+                "PFV-199",
+                f"unexpected workflow validator defect: {type(exc).__name__}: {exc}",
+            )
+        )
     return issues
 
 
@@ -74,7 +94,10 @@ def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser()
     parser.add_argument("--root", default=".")
     args = parser.parse_args(argv)
-    issues = validate(Path(args.root))
+    issues = validate(
+        Path(args.root),
+        current_main_sha=os.environ.get("PROJECT_FOUNDRY_CURRENT_MAIN_SHA"),
+    )
     if issues:
         for issue in issues:
             print(f"{issue.code}: {issue.message}", file=sys.stderr)
