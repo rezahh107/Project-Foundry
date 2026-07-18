@@ -29,16 +29,35 @@ These critical views are generated from canonical state through `scripts/render_
 
 Canonical state must be updated first. Manual edits to generated views are invalid. The validator compares expected and committed bytes and emits stable `PFV-120` through `PFV-122` diagnostics on drift.
 
+## Program Closure Gate
+
+Before the Program is accepted:
+
+1. every Work Package-listed Task must exist;
+2. every listed Task must declare the containing Work Package;
+3. every canonical Task must appear exactly once in its declared Work Package membership list;
+4. duplicate Work Package and Task identities remain separately diagnosed;
+5. no renderer may treat an orphaned Task as an acceptable hidden record.
+
+`PFV-031` is the semantic owner for reverse Task-membership closure.
+
 ## Scope Gate
 
 Before work begins:
 
 1. identify the exact task;
 2. confirm it belongs to the active Scope baseline;
-3. confirm dependencies;
-4. list explicit exclusions;
-5. reject silent Scope expansion;
-6. create a versioned Scope change when necessary.
+3. confirm the Task's Work Package is included in the active Scope;
+4. confirm every included Task carries exactly `<scope_id>@<scope_version>`;
+5. confirm the active context Work Package matches the current Task and active Scope;
+6. confirm dependencies;
+7. list explicit exclusions;
+8. reject silent Scope expansion;
+9. create a versioned Scope change when necessary.
+
+Tasks outside active Scope may retain `future_scope`. They must not be promoted into `included_task_ids` or active state without an explicit versioned Scope change.
+
+`PFV-044` owns Scope Task/Work Package closure. `PFV-045` owns exact Scope-reference compatibility.
 
 ## Progress Gate
 
