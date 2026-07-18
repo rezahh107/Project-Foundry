@@ -3,43 +3,71 @@
 ## Validation pipeline
 
 ```text
-Required-file gate
-→ strict JSON parsing
-→ declared-schema structural validation
-→ cross-document semantic validation
+required-file gate
+→ strict JSON and schema validation
+→ cross-document Program/Scope/dependency semantics
+→ real-Git lifecycle provenance
 → deterministic rendered-view parity
-→ workflow identity and supply-chain validation
+→ deterministic workflow parity
 ```
 
-Malformed canonical input never reaches semantic logic. Critical owner views are generated from canonical JSON and compared byte-for-byte.
+Malformed canonical input never reaches semantic logic. Evidence-bearing lifecycle claims cannot pass solely because a submitted JSON object is internally consistent.
 
-## Program, Scope, dependency, and dispatch closure
-
-Semantic validation establishes these preconditions before rendering:
+## Program, Scope and dispatch closure
 
 ```text
-Work Package ↔ Task membership is bidirectionally closed
+Work Package ↔ Task membership is closed
 active Scope Task → included Work Package + exact Scope reference
 Task dependency graph → acyclic
-progressed Task → every dependency is current_main_verified
+progressed Task → dependencies are current_main_verified
 next_task_id → active Scope + dependency-ready dispatch target
 ```
 
-`planning/NEXT_WORK.md` renders the canonical next Task ID and title separately from free-form `next_action`; prose cannot replace dispatch identity.
+`planning/NEXT_WORK.md` renders the canonical next Task identity separately from free-form action prose.
 
-## Lifecycle and evidence boundary
+## Git-history attestation architecture
 
-The lifecycle uses an explicit transition graph. `last_transition.to`, `current_task_status`, and canonical Task status must agree. Evidence-bearing states require matching Task/state/transition records. `current_main_verified` additionally requires repository-bound, `refs/heads/main`-bound, 40-character SHA evidence equal to the trusted current-main SHA supplied by the execution environment.
+The repository separates three identities:
 
-Completed and blocked collections are bidirectionally closed against Task statuses. Blocked Tasks require explicit blocker information and cannot simultaneously be completed.
+```text
+validation commit
+→ exact commit currently checked out and validated
 
-## CI evidence boundary
+verified subject
+→ previously existing immutable commit described by the receipt
 
-The PR job checks out the exact PR Head, asserts expected and actual SHAs, and supplies the PR base SHA as trusted current-main identity. Action pins, read-only permissions, and disabled checkout credential persistence remain deterministic workflow invariants.
+trusted Git context
+→ event/ref identities plus actual commit ancestry
+```
+
+The receipt commit never contains its own SHA. First-parent history supplies the actual prior canonical Task state and the transition commit. `subject_sha` must equal the previous immutable subject commit and remain reachable on the required ancestry.
+
+A practical main sequence is:
+
+```text
+M  implementation/merge subject exists
+V  merge receipt records subject M
+W  current-main verification receipt records subject V
+L  later main commits preserve V/W as historical ancestry
+```
+
+For a transition first observed at current `HEAD`, the workflow event must corroborate it:
+
+- PR branch validation: checked-out `HEAD` equals exact PR Head and the branch ref is explicit.
+- Main transition: checked-out `HEAD` is a push to `refs/heads/main` and `github.event.before` equals the receipt subject.
+- PR base, PR Head and synthetic merge identities remain distinct and cannot be substituted for current-main provenance.
+
+## Workflow trust boundary
+
+The workflow checks out the exact triggering Head with full history (`fetch-depth: 0`) because ancestry and first-parent state comparison are required. Permissions remain `contents: read`, action versions remain full immutable pins, and checkout credentials do not persist.
+
+## Real-Git tests
+
+The integration suite creates temporary repositories and real commits, branches and `--no-ff` merges. It proves non-self-referential post-Merge verification, trusted prior-state comparison, branch and Merge receipt validation, historical evidence preservation and deterministic forward progress from `PF-001` to `PF-002`.
 
 ## Current limitations
 
-- The repository uses a bounded built-in validator for the checked-in schema vocabulary.
-- Critical rendered views are generated; other explanatory Markdown remains manually maintained.
+- The repository uses a bounded built-in validator for its checked-in schema vocabulary.
+- Critical rendered views are generated; explanatory Markdown remains manually maintained.
 - Dogfooding remains manual structured checkpoints pending `DEC-002`.
-- Independent PR-Inspector rereview is required on every repaired exact Head.
+- A fresh PR-Inspector rereview is required on every repaired exact Head.
