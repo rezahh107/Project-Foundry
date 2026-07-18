@@ -1,21 +1,19 @@
 from __future__ import annotations
 
-import copy
-import json
-import shutil
-import re
-import subprocess
 import io
-from contextlib import redirect_stderr, redirect_stdout
+import json
+import os
+import shutil
+import subprocess
 import sys
 import tempfile
-import unittest
+from contextlib import redirect_stderr, redirect_stdout
 from pathlib import Path
 from typing import Any, Callable
 
-from scripts.render_views import check_views, write_views, main as renderer_main
+from scripts.render_views import main as renderer_main
 from scripts.render_workflow import render_foundation_workflow
-from scripts.validate_repository import validate, main as validator_main
+from scripts.validate_repository import main as validator_main, validate
 from scripts.validation_semantics import load_and_validate_structures, validate_semantics
 
 REPO_ROOT = Path(__file__).resolve().parents[1]
@@ -67,23 +65,54 @@ def apply_json_case(root: Path, case: dict[str, Any]) -> None:
     write_json(root, case["file"], document)
 
 
-def issue_codes(root: Path) -> set[str]:
-    return {issue.code for issue in validate(root)}
+def issue_codes(root: Path, *, current_main_sha: str | None = None) -> set[str]:
+    return {issue.code for issue in validate(root, current_main_sha=current_main_sha)}
 
 
-def run_cli(root: Path, script: str = "scripts/validate_repository.py", *args: str) -> subprocess.CompletedProcess[str]:
+def run_cli(
+    root: Path,
+    script: str = "scripts/validate_repository.py",
+    *args: str,
+    current_main_sha: str | None = None,
+) -> subprocess.CompletedProcess[str]:
     stdout = io.StringIO()
     stderr = io.StringIO()
     main = renderer_main if script.endswith("render_views.py") else validator_main
-    with redirect_stdout(stdout), redirect_stderr(stderr):
-        returncode = main([*args, "--root", str(root)])
+    previous = os.environ.get("PROJECT_FOUNDRY_CURRENT_MAIN_SHA")
+    try:
+        if current_main_sha is None:
+            os.environ.pop("PROJECT_FOUNDRY_CURRENT_MAIN_SHA", None)
+        else:
+            os.environ["PROJECT_FOUNDRY_CURRENT_MAIN_SHA"] = current_main_sha
+        with redirect_stdout(stdout), redirect_stderr(stderr):
+            returncode = main([*args, "--root", str(root)])
+    finally:
+        if previous is None:
+            os.environ.pop("PROJECT_FOUNDRY_CURRENT_MAIN_SHA", None)
+        else:
+            os.environ["PROJECT_FOUNDRY_CURRENT_MAIN_SHA"] = previous
     return subprocess.CompletedProcess([], returncode, stdout=stdout.getvalue(), stderr=stderr.getvalue())
 
 
-def run_subprocess_cli(root: Path, script: str, *args: str) -> subprocess.CompletedProcess[str]:
+def run_subprocess_cli(
+    root: Path,
+    script: str,
+    *args: str,
+    current_main_sha: str | None = None,
+) -> subprocess.CompletedProcess[str]:
+    env = os.environ.copy()
+    if current_main_sha is None:
+        env.pop("PROJECT_FOUNDRY_CURRENT_MAIN_SHA", None)
+    else:
+        env["PROJECT_FOUNDRY_CURRENT_MAIN_SHA"] = current_main_sha
     return subprocess.run(
         [sys.executable, script, *args, "--root", "."],
-        cwd=root, text=True, capture_output=True, check=False, timeout=20,
+        cwd=root,
+        text=True,
+        capture_output=True,
+        check=False,
+        timeout=30,
+        env=env,
     )
 
 
@@ -91,5 +120,3 @@ def mutate_json(root: Path, relative: str, mutator: Callable[[Any], None]) -> No
     document = read_json(root, relative)
     mutator(document)
     write_json(root, relative, document)
-
-
