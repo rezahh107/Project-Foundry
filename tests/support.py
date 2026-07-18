@@ -26,7 +26,11 @@ CRITICAL_VIEWS = ["PROJECT_CHARTER.md", "SYSTEM_MAP.md", "planning/NEXT_WORK.md"
 def copy_repo() -> tuple[tempfile.TemporaryDirectory[str], Path]:
     temporary = tempfile.TemporaryDirectory()
     target = Path(temporary.name) / "repo"
-    shutil.copytree(REPO_ROOT, target)
+    shutil.copytree(
+        REPO_ROOT,
+        target,
+        ignore=shutil.ignore_patterns(".git", "__pycache__", "*.pyc", ".pytest_cache"),
+    )
     return temporary, target
 
 
