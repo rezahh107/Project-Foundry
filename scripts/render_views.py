@@ -9,9 +9,11 @@ from typing import Any, Callable
 
 try:
     from scripts.validation_core import ValidationIssue
+    from scripts.validation_execution import validate_execution_controls
     from scripts.validation_semantics import load_and_validate_structures, validate_semantics
 except ModuleNotFoundError:
     from validation_core import ValidationIssue
+    from validation_execution import validate_execution_controls
     from validation_semantics import load_and_validate_structures, validate_semantics
 
 
@@ -157,6 +159,7 @@ def render_next_work(documents: dict[str, dict[str, Any]]) -> str:
     north_star = constitution["north_star"]
     task_map = {task["id"]: task for task in program["tasks"]}
     current = task_map[state["current_task_id"]]
+    next_task = task_map[state["next_task_id"]]
     scoped_tasks = "\n".join(
         f"- `{task_id}` — {task_map[task_id]['title']} — `{task_map[task_id]['status']}`"
         for task_id in scope["included_task_ids"]
@@ -205,7 +208,12 @@ def render_next_work(documents: dict[str, dict[str, Any]]) -> str:
 
 {uncertainties}
 
-## تنها قدم بعدی
+## Task بعدی canonical
+
+- شناسه: `{next_task['id']}`
+- عنوان: {next_task['title']}
+
+## دستور عملی بعدی
 
 {state['next_action']}
 """
@@ -222,6 +230,8 @@ def load_render_documents(root: Path) -> dict[str, dict[str, Any]]:
     documents, issues = load_and_validate_structures(root)
     if not issues:
         issues = validate_semantics(documents)
+    if not issues:
+        issues = validate_execution_controls(documents)
     if issues:
         raise RenderInputError(issues)
     return documents
