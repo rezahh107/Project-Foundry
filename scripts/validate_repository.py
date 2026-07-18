@@ -1,9 +1,8 @@
 #!/usr/bin/env python3
-"""Deterministic structural, semantic, rendering, and workflow validation."""
+"""Deterministic structural, semantic, rendering, workflow, and Git-provenance validation."""
 from __future__ import annotations
 
 import argparse
-import os
 import sys
 from pathlib import Path
 
@@ -40,7 +39,7 @@ def _validate_rendered_views(root: Path, documents: dict[str, dict]) -> list[Val
     return issues
 
 
-def validate(root: Path, *, current_main_sha: str | None = None) -> list[ValidationIssue]:
+def validate(root: Path) -> list[ValidationIssue]:
     root = root.resolve()
     missing = [relative for relative in REQUIRED_FILES if not (root / relative).is_file()]
     if missing:
@@ -53,12 +52,7 @@ def validate(root: Path, *, current_main_sha: str | None = None) -> list[Validat
     issues: list[ValidationIssue] = []
     try:
         issues.extend(validate_semantics(documents))
-        issues.extend(
-            validate_execution_controls(
-                documents,
-                current_main_sha=current_main_sha,
-            )
-        )
+        issues.extend(validate_execution_controls(documents, root=root))
     except Exception as exc:
         return [
             ValidationIssue(
@@ -94,10 +88,7 @@ def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser()
     parser.add_argument("--root", default=".")
     args = parser.parse_args(argv)
-    issues = validate(
-        Path(args.root),
-        current_main_sha=os.environ.get("PROJECT_FOUNDRY_CURRENT_MAIN_SHA"),
-    )
+    issues = validate(Path(args.root))
     if issues:
         for issue in issues:
             print(f"{issue.code}: {issue.message}", file=sys.stderr)
