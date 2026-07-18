@@ -29,6 +29,8 @@ jobs:
   validate-exact-head:
     name: Validate exact triggering head
     runs-on: ubuntu-latest
+    env:
+      PROJECT_FOUNDRY_CURRENT_MAIN_SHA: ${{{{ github.event.pull_request.base.sha || github.sha }}}}
     steps:
       - name: Check out exact triggering head
         uses: actions/checkout@{CHECKOUT_PIN} # v6.0.3
@@ -46,8 +48,8 @@ jobs:
         run: |
           set -euo pipefail
           actual_sha="$(git rev-parse HEAD)"
-          printf 'event_name=%s\\ntrigger_ref=%s\\nexpected_sha=%s\\nactual_sha=%s\\n' \\
-            "$EVENT_NAME" "$TRIGGER_REF" "$EXPECTED_SHA" "$actual_sha"
+          printf 'event_name=%s\\ntrigger_ref=%s\\nexpected_sha=%s\\nactual_sha=%s\\ncurrent_main_sha=%s\\n' \\
+            "$EVENT_NAME" "$TRIGGER_REF" "$EXPECTED_SHA" "$actual_sha" "$PROJECT_FOUNDRY_CURRENT_MAIN_SHA"
           test "$actual_sha" = "$EXPECTED_SHA"
 
       - name: Set up Python
@@ -96,6 +98,27 @@ jobs:
 
       - name: Test renderer Task-set completeness
         run: python -m unittest -v tests.test_program_scope_closure.RendererTaskSetCompletenessTests
+
+      - name: Test dependency graph acyclicity
+        run: python -m unittest -v tests.test_dependency_lifecycle.DependencyGraphAcyclicityTests
+
+      - name: Test dependency satisfaction
+        run: python -m unittest -v tests.test_dependency_lifecycle.DependencySatisfactionTests
+
+      - name: Test next-task dispatch safety
+        run: python -m unittest -v tests.test_dependency_lifecycle.NextTaskDispatchTests
+
+      - name: Test lifecycle transition legality
+        run: python -m unittest -v tests.test_dependency_lifecycle.LifecycleTransitionTests
+
+      - name: Test exact-main evidence validation
+        run: python -m unittest -v tests.test_dependency_lifecycle.ExactMainEvidenceTests
+
+      - name: Test completed and blocked closure
+        run: python -m unittest -v tests.test_dependency_lifecycle.ProgressCollectionClosureTests
+
+      - name: Test next-work dispatch rendering
+        run: python -m unittest -v tests.test_dependency_lifecycle.NextWorkDispatchRenderingTests
 
       - name: Test semantic reference corpus
         run: python -m unittest -v tests.test_semantics_workflow.SemanticReferenceTests
