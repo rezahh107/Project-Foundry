@@ -96,6 +96,14 @@ def _validate_identity_bindings(documents: dict[str, dict[str, Any]]) -> tuple[l
     return issues, north_star_id
 
 
+def _first_by_id(records: list[dict[str, Any]]) -> dict[str, dict[str, Any]]:
+    """Index first records without silently overwriting duplicate identities."""
+    indexed: dict[str, dict[str, Any]] = {}
+    for record in records:
+        indexed.setdefault(record["id"], record)
+    return indexed
+
+
 def _validate_program_and_scope(
     documents: dict[str, dict[str, Any]], north_star_id: str
 ) -> tuple[list[ValidationIssue], dict[str, dict[str, Any]], dict[str, dict[str, Any]]]:
@@ -107,17 +115,52 @@ def _validate_program_and_scope(
     tasks = program["tasks"]
     work_package_ids = [item["id"] for item in work_packages]
     task_ids = [item["id"] for item in tasks]
-    if duplicates(work_package_ids):
+    duplicate_work_package_ids = duplicates(work_package_ids)
+    duplicate_task_ids = duplicates(task_ids)
+    if duplicate_work_package_ids:
         issues.append(ValidationIssue("PFV-020", "duplicate work package IDs"))
-    if duplicates(task_ids):
+    if duplicate_task_ids:
         issues.append(ValidationIssue("PFV-021", "duplicate task IDs"))
-    work_package_map = {item["id"]: item for item in work_packages}
-    task_map = {item["id"]: item for item in tasks}
+
+    work_package_map = _first_by_id(work_packages)
+    task_map = _first_by_id(tasks)
+    membership_by_task: dict[str, list[str]] = {}
+
+    for work_package in work_packages:
+        work_package_id = work_package["id"]
+        for task_id in work_package["task_ids"]:
+            membership_by_task.setdefault(task_id, []).append(work_package_id)
+            task = task_map.get(task_id)
+            if task is None:
+                issues.append(
+                    ValidationIssue(
+                        "PFV-029",
+                        f"work package {work_package_id} references unknown task {task_id}",
+                    )
+                )
+            elif task["work_package_id"] != work_package_id:
+                issues.append(
+                    ValidationIssue(
+                        "PFV-030",
+                        f"task {task_id} work package linkage is inconsistent",
+                    )
+                )
 
     for task in tasks:
         task_id = task["id"]
-        if task["work_package_id"] not in work_package_map:
+        declared_work_package_id = task["work_package_id"]
+        if declared_work_package_id not in work_package_map:
             issues.append(ValidationIssue("PFV-022", f"task {task_id} references unknown work package"))
+        elif task_id not in duplicate_task_ids and declared_work_package_id not in duplicate_work_package_ids:
+            memberships = membership_by_task.get(task_id, [])
+            if memberships != [declared_work_package_id]:
+                issues.append(
+                    ValidationIssue(
+                        "PFV-031",
+                        f"task {task_id} must appear exactly once in declared work package "
+                        f"{declared_work_package_id}; observed memberships: {memberships}",
+                    )
+                )
         if task["status"] not in ALLOWED_TASK_STATES:
             issues.append(ValidationIssue("PFV-023", f"task {task_id} has invalid status {task['status']}"))
         for dependency in task["depends_on"]:
@@ -132,14 +175,6 @@ def _validate_program_and_scope(
         if task["status"] == "complete":
             issues.append(ValidationIssue("PFV-028", f"task {task_id} must preserve current_main_verified evidence state"))
 
-    for work_package in work_packages:
-        for task_id in work_package["task_ids"]:
-            task = task_map.get(task_id)
-            if task is None:
-                issues.append(ValidationIssue("PFV-029", f"work package {work_package['id']} references unknown task {task_id}"))
-            elif task["work_package_id"] != work_package["id"]:
-                issues.append(ValidationIssue("PFV-030", f"task {task_id} work package linkage is inconsistent"))
-
     included_work_packages = set(scope["included_work_package_ids"])
     included_tasks = set(scope["included_task_ids"])
     unknown_scope_wps = included_work_packages - set(work_package_map)
@@ -148,6 +183,27 @@ def _validate_program_and_scope(
     unknown_scope_tasks = included_tasks - set(task_map)
     if unknown_scope_tasks:
         issues.append(ValidationIssue("PFV-041", f"scope includes unknown task(s): {sorted(unknown_scope_tasks)}"))
+
+    active_scope_ref = f"{scope['scope_id']}@{scope['scope_version']}"
+    for included_task_id in sorted(included_tasks - unknown_scope_tasks):
+        included_task = task_map[included_task_id]
+        if included_task["work_package_id"] not in included_work_packages:
+            issues.append(
+                ValidationIssue(
+                    "PFV-044",
+                    f"included task {included_task_id} belongs to work package "
+                    f"{included_task['work_package_id']} outside active scope",
+                )
+            )
+        if included_task["scope_ref"] != active_scope_ref:
+            issues.append(
+                ValidationIssue(
+                    "PFV-045",
+                    f"included task {included_task_id} has scope_ref "
+                    f"{included_task['scope_ref']!r}; expected {active_scope_ref!r}",
+                )
+            )
+
     active_task_id = scope["active_task_id"]
     if active_task_id not in included_tasks:
         issues.append(ValidationIssue("PFV-042", "active task is outside active scope"))
@@ -163,6 +219,14 @@ def _validate_program_and_scope(
     if current_task is None:
         issues.append(ValidationIssue("PFV-059", f"current task {current_task_id} is absent from the program"))
     else:
+        if current_task["work_package_id"] not in included_work_packages:
+            issues.append(
+                ValidationIssue(
+                    "PFV-044",
+                    f"current task {current_task_id} belongs to work package "
+                    f"{current_task['work_package_id']} outside active scope",
+                )
+            )
         if state["current_task_status"] != current_task["status"]:
             issues.append(ValidationIssue("PFV-052", "current task status differs from execution program"))
         expected_context = [
@@ -175,11 +239,19 @@ def _validate_program_and_scope(
             issues.append(ValidationIssue("PFV-053", f"active context path must be {expected_context}"))
 
     context = state["active_context_path"]
-    if len(context) == 4 and context[3] not in task_map:
-        issues.append(ValidationIssue("PFV-053", f"active context path references unknown task {context[3]}"))
+    if len(context) == 4:
+        if context[3] not in task_map:
+            issues.append(ValidationIssue("PFV-053", f"active context path references unknown task {context[3]}"))
+        if context[2] not in included_work_packages:
+            issues.append(
+                ValidationIssue(
+                    "PFV-044",
+                    f"active context work package {context[2]} is outside active scope",
+                )
+            )
     if state["program_ref"] != f"{program['program_id']}@{program['program_version']}":
         issues.append(ValidationIssue("PFV-054", "current state has stale program reference"))
-    if state["scope_ref"] != f"{scope['scope_id']}@{scope['scope_version']}":
+    if state["scope_ref"] != active_scope_ref:
         issues.append(ValidationIssue("PFV-055", "current state has stale scope reference"))
     for completed_id in state["completed_task_ids"]:
         completed = task_map.get(completed_id)
