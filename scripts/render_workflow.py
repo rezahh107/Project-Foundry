@@ -55,6 +55,9 @@ jobs:
         with:
           python-version: "3.12"
 
+      - name: Run rendered view check
+        run: python scripts/render_views.py --check --root .
+
       - name: Run deterministic repository validation
         run: python scripts/validate_repository.py --root .
 
@@ -85,6 +88,15 @@ jobs:
       - name: Test renderer structural gate
         run: python -m unittest -v tests.test_structural_renderer.RendererStructuralGateTests
 
+      - name: Test Program membership closure
+        run: python -m unittest -v tests.test_program_scope_closure.ProgramMembershipClosureTests
+
+      - name: Test Scope membership closure
+        run: python -m unittest -v tests.test_program_scope_closure.ScopeMembershipClosureTests
+
+      - name: Test renderer Task-set completeness
+        run: python -m unittest -v tests.test_program_scope_closure.RendererTaskSetCompletenessTests
+
       - name: Test semantic reference corpus
         run: python -m unittest -v tests.test_semantics_workflow.SemanticReferenceTests
 
@@ -96,6 +108,9 @@ jobs:
 
       - name: Test workflow bypass corpus
         run: python -m unittest -v tests.test_semantics_workflow.WorkflowHardeningTests
+
+      - name: Run complete unit suite
+        run: python -m unittest discover -s tests -v
 
       - name: Compile validation code
         run: python -m compileall -q scripts tests
