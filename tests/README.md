@@ -1,6 +1,6 @@
 # Validation and Mutation Test Corpus
 
-The Foundation suite covers structural safety, rendered-view boundaries, Program and Scope closure, dependency graph and readiness, next-task dispatch, lifecycle transitions, exact-main evidence, completed/blocked closure, Decision Intelligence, Dogfooding, workflow bypasses, and direct/in-process/subprocess CLI boundaries.
+The Foundation suite covers structural safety, Program/Scope closure, dependency graph and dispatch, lifecycle transitions, evidence-carrier diagnostics, real Git provenance, historical evidence preservation, Decision Intelligence, Dogfooding and workflow hardening.
 
 Diagnostic ownership is normative in `docs/VALIDATION_DIAGNOSTIC_OWNERSHIP.md`.
 
@@ -19,6 +19,7 @@ python -m unittest -v tests.test_dependency_lifecycle.LifecycleTransitionTests
 python -m unittest -v tests.test_dependency_lifecycle.ExactMainEvidenceTests
 python -m unittest -v tests.test_dependency_lifecycle.ProgressCollectionClosureTests
 python -m unittest -v tests.test_dependency_lifecycle.NextWorkDispatchRenderingTests
+python -m unittest -v tests.test_git_provenance
 python -m unittest -v tests.test_semantics_workflow.SemanticReferenceTests
 python -m unittest -v tests.test_semantics_workflow.DecisionIntelligenceTests
 python -m unittest -v tests.test_semantics_workflow.DogfoodingTests
@@ -27,4 +28,16 @@ python -m unittest discover -s tests -v
 python -m compileall -q scripts tests
 ```
 
-Semantic invalid cases must exit non-zero through the real CLI, emit the intended stable diagnostic, omit `PFV-199`, and emit no traceback. Exact-main positive tests supply `PROJECT_FOUNDRY_CURRENT_MAIN_SHA`; a model-authored free-form claim is never sufficient.
+## Real-Git integration contract
+
+`tests.test_git_provenance` creates temporary Git repositories with actual commits, feature branches, `--no-ff` Merge commits, receipt commits and later main commits. It verifies:
+
+- a receipt cannot embed or precompute its own commit SHA;
+- PR base, PR Head, synthetic merge and unrelated SHAs cannot substitute for current-main provenance;
+- submitted `last_transition.from` must match the actual prior canonical status in first-parent history;
+- branch-validation, Merge and current-main receipts use distinct trust contexts;
+- a Merge subject followed by a Merge receipt and a current-main verification receipt is constructible;
+- historical evidence remains valid after later main commits;
+- verified completion of `PF-001` makes `PF-002` dispatch-eligible.
+
+Every invalid semantic case must exit non-zero through the real CLI, emit the intended stable diagnostic, omit `PFV-199`, and emit no traceback.
