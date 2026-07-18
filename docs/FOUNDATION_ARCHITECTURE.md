@@ -6,35 +6,40 @@
 Required-file gate
 → strict JSON parsing
 → declared-schema structural validation
-→ cross-file semantic validation
+→ cross-document semantic validation
 → deterministic rendered-view parity
 → workflow identity and supply-chain validation
 ```
 
-Malformed canonical input never reaches semantic business logic. Critical owner views are generated from canonical JSON through one renderer and compared byte-for-byte during validation.
+Malformed canonical input never reaches semantic logic. Critical owner views are generated from canonical JSON and compared byte-for-byte.
 
-## Program and Scope closure
+## Program, Scope, dependency, and dispatch closure
 
-Semantic validation establishes explicit graph-closure preconditions before rendering:
+Semantic validation establishes these preconditions before rendering:
 
 ```text
-every Work Package membership → known Task with matching declaration
-every Task → exactly one membership in its declared Work Package
-
-every active Scope Task → included Work Package
-every active Scope Task → exact active Scope reference
-active context Work Package → current Task declaration and active Scope
+Work Package ↔ Task membership is bidirectionally closed
+active Scope Task → included Work Package + exact Scope reference
+Task dependency graph → acyclic
+progressed Task → every dependency is current_main_verified
+next_task_id → active Scope + dependency-ready dispatch target
 ```
 
-`SYSTEM_MAP.md` may iterate Work Package membership lists only because `PFV-031` prevents canonical Tasks from becoming orphaned. `planning/NEXT_WORK.md` may iterate `included_task_ids` only because `PFV-044` and `PFV-045` prevent cross-Work-Package Scope expansion and stale Scope references.
+`planning/NEXT_WORK.md` renders the canonical next Task ID and title separately from free-form `next_action`; prose cannot replace dispatch identity.
+
+## Lifecycle and evidence boundary
+
+The lifecycle uses an explicit transition graph. `last_transition.to`, `current_task_status`, and canonical Task status must agree. Evidence-bearing states require matching Task/state/transition records. `current_main_verified` additionally requires repository-bound, `refs/heads/main`-bound, 40-character SHA evidence equal to the trusted current-main SHA supplied by the execution environment.
+
+Completed and blocked collections are bidirectionally closed against Task statuses. Blocked Tasks require explicit blocker information and cannot simultaneously be completed.
 
 ## CI evidence boundary
 
-The required PR job explicitly checks out the PR Head SHA, prints expected and actual SHAs, and fails closed on mismatch. Synthetic merge validation is not presented as exact-Head evidence.
+The PR job checks out the exact PR Head, asserts expected and actual SHAs, and supplies the PR base SHA as trusted current-main identity. Action pins, read-only permissions, and disabled checkout credential persistence remain deterministic workflow invariants.
 
 ## Current limitations
 
-- The repository uses a bounded built-in validator for the checked-in schema vocabulary rather than a third-party JSON Schema runtime.
+- The repository uses a bounded built-in validator for the checked-in schema vocabulary.
 - Critical rendered views are generated; other explanatory Markdown remains manually maintained.
 - Dogfooding remains manual structured checkpoints pending `DEC-002`.
 - Independent PR-Inspector rereview is required on every repaired exact Head.
