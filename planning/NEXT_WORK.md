@@ -40,6 +40,11 @@
 
 - The final MVP dogfooding implementation method is intentionally not selected yet; PF-002 applies Decision Intelligence first.
 
-## تنها قدم بعدی
+## Task بعدی canonical
+
+- شناسه: `PF-001`
+- عنوان: Establish governed repository foundation
+
+## دستور عملی بعدی
 
 Review and merge the foundation pull request, then verify the exact current main commit before marking PF-001 complete.
