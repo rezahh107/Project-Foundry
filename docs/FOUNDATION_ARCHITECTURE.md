@@ -1,28 +1,25 @@
 # Foundation Architecture
 
-## Control plane
-
-The initial foundation is intentionally small but complete enough to preserve the whole project:
+## Validation pipeline
 
 ```text
-Constitution
-→ Progress and Scope
-→ Decision Intelligence
-→ Dogfooding
-→ deterministic validation
+Required-file gate
+→ strict JSON parsing
+→ declared-schema structural validation
+→ cross-file semantic validation
+→ deterministic rendered-view parity
+→ workflow identity and supply-chain validation
 ```
 
-## Why this precedes the Foundry Kernel
+Malformed canonical input never reaches semantic business logic. Critical owner views are generated from canonical JSON through one renderer and compared byte-for-byte during validation.
 
-The Kernel is one future work package. The repository must first preserve the full program so that Kernel design cannot replace the product objective.
+## CI evidence boundary
 
-## Validation boundary
-
-The current validator proves structural and cross-file consistency. It does not prove that every architectural recommendation is semantically optimal. Semantic decisions remain evidence-bound Decision Intelligence records.
+The required PR job explicitly checks out the PR Head SHA, prints expected and actual SHAs, and fails closed on mismatch. Synthetic merge validation is not presented as exact-Head evidence.
 
 ## Current limitations
 
-- Markdown projections are manually maintained.
-- JSON Schema files are descriptive; the zero-dependency validator enforces the initial subset directly.
-- Dogfooding uses manual checkpoints pending `DEC-002`.
-- The foundation is not active on `main` until Merge and exact-main verification.
+- The repository uses a bounded built-in validator for the checked-in schema vocabulary rather than a third-party JSON Schema runtime.
+- Critical rendered views are generated; other explanatory Markdown remains manually maintained.
+- Dogfooding remains manual structured checkpoints pending `DEC-002`.
+- Independent PR-Inspector rereview is required on every repaired exact Head.

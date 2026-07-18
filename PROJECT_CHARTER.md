@@ -1,17 +1,16 @@
+<!-- GENERATED FILE. Run: python scripts/render_views.py --write --root . -->
 # Project Foundry Charter
 
 ## The simple picture
 
-Project Foundry is a factory for projects:
-
 ```text
-idea enters
-→ the idea is clarified
-→ reliable project documents are produced
-→ a repository is prepared
-→ the work is planned and divided
-→ safe implementation prompts are issued
-→ evidence shows what actually happened
+raw idea
+→ clarified concept
+→ reliable specifications
+→ prepared repository
+→ execution program and tasks
+→ precise implementation prompts
+→ evidence-backed completion
 ```
 
 ## North Star
@@ -20,36 +19,50 @@ idea enters
 
 Build a repository-native, self-hosting system that guides a non-technical owner from a raw idea to a traceable, executable, and verifiable project without losing the original objective, current scope, progress, decisions, or exact next action.
 
-## Owner and AI relationship
+**Change policy:** `owner_authorized_versioned_change_only`
 
-- The owner defines goals, priorities, acceptable trade-offs, budget, and protected actions.
-- AI has broad technical authority inside the approved scope: research, comparison, architecture, implementation, validation, diagnosis, and repair.
-- Evidence determines factual reality.
-- A model claim is not evidence of execution or completion.
-- Owner-facing explanations are short, simple, Persian, and mental-model based.
-- Agent-facing contracts are precise, complete, professional, and normally English.
+## Authority model
 
-## Non-goals for the first foundation
+### Project owner
 
-The first foundation does not yet implement:
+- `goals`
+- `priority`
+- `budget`
+- `scope_approval`
+- `protected_actions`
+- `merge`
+- `release`
+- `deployment`
 
-- the complete Idea Maturation Pipeline;
-- the complete Specification Pipeline;
-- automatic repository creation;
-- automatic background monitoring;
-- automatic prompt execution;
-- automatic Merge, Release, or Deployment;
-- the final Foundry Kernel;
-- a GUI or hosted service.
+### AI technical authority inside approved scope
 
-## Success condition for this foundation
+- `research`
+- `strategy_comparison`
+- `architecture`
+- `implementation`
+- `validation`
+- `diagnosis`
+- `bounded_repair`
 
-The foundation succeeds when the repository can deterministically show:
+### Evidence authority
 
-1. the unchanged North Star;
-2. the complete high-level program;
-3. the active scope and exclusions;
-4. the exact current task and next action;
-5. why a major implementation method was selected;
-6. observations and lessons discovered through self-hosting;
-7. evidence-backed lifecycle status without overstating completion.
+- `factual_reality`
+- `execution_claims`
+- `validation_claims`
+- `completion_claims`
+
+## Active foundation scope
+
+**Scope:** `PF-SCOPE-001@0.1.0`
+
+Establish the repository-native foundation that preserves the complete Project Foundry objective and enables evidence-bound progress, decision intelligence, and dogfooding.
+
+### Explicit exclusions
+
+- **Complete domain pipeline implementation** — `deferred_to_registered_future_work_packages`; authority: `project_owner_instruction`
+- **Automatic background monitoring** — `deferred_pending_decision_intelligence`; authority: `project_owner_instruction`
+- **Automatic Merge, Release, or Deployment** — `protected_owner_action`; authority: `project_constitution`
+
+## Completion truth
+
+A task may be treated as complete only after `current_main_verified` with evidence. An agent claim alone is not sufficient: `false`.

@@ -4,12 +4,13 @@ This is currently a personal, owner-controlled repository.
 
 ## Change workflow
 
-1. Read `AGENTS.md` and canonical project state.
-2. Confirm the active task and scope.
-3. Use a focused branch.
-4. Update implementation, tests, canonical state, and rendered views together.
-5. Run repository validation.
-6. Open a draft pull request.
-7. Do not merge without explicit owner action.
+1. Read `AGENTS.md` and canonical state.
+2. Confirm the active task and Scope.
+3. Research and record consequential implementation-method decisions.
+4. Update canonical JSON first.
+5. Regenerate critical views with `python scripts/render_views.py --write --root .`.
+6. Run all validation commands.
+7. Use a focused branch and PR.
+8. Do not Merge, Release, or Deploy without explicit owner instruction.
 
-External contributions may be considered later through a versioned policy decision.
+Manual edits to generated critical views are invalid.

@@ -18,10 +18,15 @@
 
 ## Evidence and validation
 
+- [ ] `python scripts/render_views.py --check --root .`
 - [ ] `python scripts/validate_repository.py --root .`
-- [ ] `python -m unittest discover -s tests`
-- [ ] Canonical state and rendered views agree
+- [ ] `python -m unittest discover -s tests -v`
+- [ ] Canonical documents pass structural schemas before semantic checks
+- [ ] Generated views exactly match canonical state
 - [ ] No completion claim exceeds evidence
+- [ ] Exact triggering SHA is checked out and asserted in CI
+- [ ] All workflow actions use verified full commit pins
+- [ ] Checkout credential persistence is disabled
 
 ## Dogfooding checkpoint
 
@@ -31,4 +36,4 @@
 
 ## Protected actions
 
-- [ ] No Merge, Release, Deployment, destructive action, secret change, or repository-policy change is performed by this PR without explicit owner authority.
+- [ ] No Merge, Release, Deployment, destructive action, secret change, or repository-policy change is performed without explicit owner authority.

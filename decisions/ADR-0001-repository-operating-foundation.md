@@ -1,4 +1,4 @@
-# ADR-0001: Use repository-native canonical state with rendered human views
+# ADR-0001: Repository-native canonical state with deterministic rendered views
 
 - Status: Accepted for foundation candidate
 - Decision ID: `DEC-001`
@@ -6,28 +6,20 @@
 
 ## Context
 
-The owner may return after several days and forget the original objective. Models may also over-focus on the current technical subproblem. Chat memory is not a reliable project authority.
+Chat memory is not reliable project authority. Separate hand-maintained Markdown copies can silently drift from canonical state.
 
 ## Decision
 
-Use versioned JSON files inside the repository as canonical state. Generate or maintain concise Markdown views for the owner and precise technical contracts for agents.
+Use versioned JSON as canonical state. Generate `PROJECT_CHARTER.md`, `SYSTEM_MAP.md`, and `planning/NEXT_WORK.md` through one deterministic renderer. Validate canonical structure before cross-file semantics and compare generated views byte-for-byte.
 
 ## Consequences
 
-### Positive
-
-- The North Star and full program remain discoverable.
-- Progress and Scope can be validated across sessions.
-- Owner and agent views can remain aligned.
-- Repository evidence, not chat memory, becomes project truth.
-
-### Negative
-
-- Canonical and rendered files must be updated together.
-- Validators and fixtures are required to prevent drift.
+- North Star, Program, Scope, status, and next action cannot silently diverge in critical views.
+- Agents must update JSON first and regenerate views.
+- Structural schemas and adversarial mutation tests become part of the foundation contract.
 
 ## Reconsideration triggers
 
-- Canonical state becomes too fragmented to maintain.
+- Multiple concurrent writers require transaction semantics.
+- State fragmentation becomes unmanageable.
 - A database-backed runtime becomes necessary.
-- Multiple concurrent writers require stronger transaction semantics.
