@@ -54,8 +54,14 @@ jobs:
       - name: Test malformed renderer subprocess boundary
         run: python -m unittest -v tests.test_valid_api.SubprocessRendererFailureTests
 
-      - name: Test deterministic renderers and workflow
-        run: python -m unittest -v tests.test_structural_renderer.ValidRepositoryTests.test_renderers_are_idempotent_and_workflow_is_exact
+      - name: Test generated view parity
+        run: python -m unittest -v tests.test_valid_api.DeterministicViewCheckTests
+
+      - name: Test idempotent view writes
+        run: python -m unittest -v tests.test_valid_api.DeterministicViewWriteTests
+
+      - name: Test deterministic workflow parity
+        run: python -m unittest -v tests.test_valid_api.DeterministicWorkflowParityTests
 
       - name: Test structural mutation corpus
         run: python -m unittest -v tests.test_structural_renderer.StructuralMutationTests

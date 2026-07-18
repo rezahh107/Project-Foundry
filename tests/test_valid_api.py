@@ -37,3 +37,37 @@ class SubprocessRendererFailureTests(unittest.TestCase):
             self.assertNotIn("Traceback", result.stderr)
         finally:
             temporary.cleanup()
+
+
+class DeterministicViewCheckTests(unittest.TestCase):
+    def test_generated_views_are_current(self) -> None:
+        from scripts.render_views import check_views
+
+        temporary, target = copy_repo()
+        try:
+            self.assertEqual([], check_views(target))
+        finally:
+            temporary.cleanup()
+
+
+class DeterministicViewWriteTests(unittest.TestCase):
+    def test_view_write_is_idempotent(self) -> None:
+        from scripts.render_views import write_views
+        from tests.support import CRITICAL_VIEWS
+
+        temporary, target = copy_repo()
+        try:
+            before = {path: (target / path).read_bytes() for path in CRITICAL_VIEWS}
+            write_views(target)
+            after = {path: (target / path).read_bytes() for path in CRITICAL_VIEWS}
+            self.assertEqual(before, after)
+        finally:
+            temporary.cleanup()
+
+
+class DeterministicWorkflowParityTests(unittest.TestCase):
+    def test_workflow_matches_renderer_exactly(self) -> None:
+        from scripts.render_workflow import render_foundation_workflow
+
+        actual = (REPO_ROOT / ".github/workflows/foundation-validation.yml").read_text(encoding="utf-8")
+        self.assertEqual(render_foundation_workflow(), actual)
