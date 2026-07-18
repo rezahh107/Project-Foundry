@@ -14,7 +14,7 @@ WORKFLOW_PATH = ".github/workflows/foundation-validation.yml"
 
 
 def render_foundation_workflow() -> str:
-    return f'''name: Foundation validation
+    return f"""name: Foundation validation
 
 on:
   pull_request:
@@ -30,14 +30,21 @@ jobs:
     name: Validate exact triggering head
     runs-on: ubuntu-latest
     env:
-      PROJECT_FOUNDRY_CURRENT_MAIN_SHA: ${{{{ github.event.pull_request.base.sha || github.sha }}}}
+      PROJECT_FOUNDRY_EVENT_NAME: ${{{{ github.event_name }}}}
+      PROJECT_FOUNDRY_EXPECTED_HEAD_SHA: ${{{{ github.event.pull_request.head.sha || github.sha }}}}
+      PROJECT_FOUNDRY_GITHUB_REF: ${{{{ github.ref }}}}
+      PROJECT_FOUNDRY_PR_HEAD_SHA: ${{{{ github.event.pull_request.head.sha || '' }}}}
+      PROJECT_FOUNDRY_PR_BASE_SHA: ${{{{ github.event.pull_request.base.sha || '' }}}}
+      PROJECT_FOUNDRY_PR_HEAD_REF: ${{{{ github.event.pull_request.head.ref || '' }}}}
+      PROJECT_FOUNDRY_SYNTHETIC_MERGE_SHA: ${{{{ github.event.pull_request.merge_commit_sha || '' }}}}
+      PROJECT_FOUNDRY_PUSH_BEFORE_SHA: ${{{{ github.event.before || '' }}}}
     steps:
       - name: Check out exact triggering head
         uses: actions/checkout@{CHECKOUT_PIN} # v6.0.3
         with:
           ref: {EXPECTED_SHA_EXPRESSION}
           persist-credentials: false
-          fetch-depth: 1
+          fetch-depth: 0
 
       - name: Verify exact checkout identity
         shell: bash
@@ -48,8 +55,9 @@ jobs:
         run: |
           set -euo pipefail
           actual_sha="$(git rev-parse HEAD)"
-          printf 'event_name=%s\\ntrigger_ref=%s\\nexpected_sha=%s\\nactual_sha=%s\\ncurrent_main_sha=%s\\n' \\
-            "$EVENT_NAME" "$TRIGGER_REF" "$EXPECTED_SHA" "$actual_sha" "$PROJECT_FOUNDRY_CURRENT_MAIN_SHA"
+          printf 'event_name=%s\ntrigger_ref=%s\nexpected_sha=%s\nactual_sha=%s\npr_base_sha=%s\npush_before_sha=%s\n' \
+            "$EVENT_NAME" "$TRIGGER_REF" "$EXPECTED_SHA" "$actual_sha" \
+            "$PROJECT_FOUNDRY_PR_BASE_SHA" "$PROJECT_FOUNDRY_PUSH_BEFORE_SHA"
           test "$actual_sha" = "$EXPECTED_SHA"
 
       - name: Set up Python
@@ -111,7 +119,7 @@ jobs:
       - name: Test lifecycle transition legality
         run: python -m unittest -v tests.test_dependency_lifecycle.LifecycleTransitionTests
 
-      - name: Test exact-main evidence validation
+      - name: Test evidence carrier diagnostics
         run: python -m unittest -v tests.test_dependency_lifecycle.ExactMainEvidenceTests
 
       - name: Test completed and blocked closure
@@ -119,6 +127,9 @@ jobs:
 
       - name: Test next-work dispatch rendering
         run: python -m unittest -v tests.test_dependency_lifecycle.NextWorkDispatchRenderingTests
+
+      - name: Test real Git provenance and forward progress
+        run: python -m unittest -v tests.test_git_provenance
 
       - name: Test semantic reference corpus
         run: python -m unittest -v tests.test_semantics_workflow.SemanticReferenceTests
@@ -137,7 +148,7 @@ jobs:
 
       - name: Compile validation code
         run: python -m compileall -q scripts tests
-'''
+"""
 
 
 def main(argv: list[str] | None = None) -> int:
