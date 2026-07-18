@@ -6,8 +6,8 @@
   "required": ["schema_version", "project_id", "north_star_id", "decisions"],
   "properties": {
     "schema_version": {"const": "decision-registry.v1"},
-    "project_id": {"const": "PROJECT-FOUNDRY"},
-    "north_star_id": {"const": "PF-NORTH-STAR-001"},
+    "project_id": {"type": "string", "minLength": 1},
+    "north_star_id": {"type": "string", "minLength": 1},
     "decisions": {
       "type": "array",
       "minItems": 1,
@@ -23,7 +23,7 @@
           "id": {"type": "string", "minLength": 1},
           "title": {"type": "string", "minLength": 1},
           "decision_class": {"enum": ["D1_LIGHTWEIGHT", "D2_STRUCTURED", "D3_HIGH_CONSEQUENCE"]},
-          "status": {"enum": ["research_required", "accepted_for_foundation_candidate", "accepted", "authorized", "implemented", "rejected", "superseded"]},
+          "status": {"type": "string", "minLength": 1},
           "question": {"type": "string", "minLength": 1},
           "hard_constraints": {"type": "array", "items": {"type": "string", "minLength": 1}, "uniqueItems": true},
           "options_considered": {"type": "array", "items": {"type": "string", "minLength": 1}, "uniqueItems": true},

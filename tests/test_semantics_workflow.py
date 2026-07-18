@@ -2,12 +2,11 @@ from __future__ import annotations
 
 import copy
 import unittest
-from pathlib import Path
 from typing import Any, Callable
 
-from scripts.validate_repository import validate
 from scripts.validation_semantics import load_and_validate_structures, validate_semantics
 from tests.support import REPO_ROOT, copy_repo, issue_codes, mutate_json, run_cli
+
 
 class SemanticReferenceTests(unittest.TestCase):
     def _assert_case(self, name: str, relative: str, mutate: Callable[[Any], None], expected: str) -> None:
@@ -33,6 +32,7 @@ class SemanticReferenceTests(unittest.TestCase):
             ("duplicate_wp", "planning/execution-program.v1.json", lambda d: d["work_packages"].append(copy.deepcopy(d["work_packages"][0])), "PFV-020"),
             ("duplicate_task", "planning/execution-program.v1.json", lambda d: d["tasks"].append(copy.deepcopy(d["tasks"][0])), "PFV-021"),
             ("unknown_wp", "planning/execution-program.v1.json", lambda d: d["tasks"][0].__setitem__("work_package_id", "WP-404"), "PFV-022"),
+            ("invalid_task_status", "planning/execution-program.v1.json", lambda d: d["tasks"][0].__setitem__("status", "BAD"), "PFV-023"),
             ("unknown_dep", "planning/execution-program.v1.json", lambda d: d["tasks"][0]["depends_on"].append("PF-404"), "PFV-024"),
             ("self_dep", "planning/execution-program.v1.json", lambda d: d["tasks"][0]["depends_on"].append("PF-001"), "PFV-025"),
             ("no_acceptance", "planning/execution-program.v1.json", lambda d: d["tasks"][0].__setitem__("acceptance_criteria", []), "PFV-026"),
@@ -59,18 +59,12 @@ class SemanticReferenceTests(unittest.TestCase):
             with self.subTest(case=name):
                 self._assert_case(name, relative, mutation, expected)
 
-    def test_semantic_only_branches_remain_live(self) -> None:
+    def test_semantic_validator_is_substantive(self) -> None:
         documents, issues = load_and_validate_structures(REPO_ROOT)
         self.assertEqual([], issues)
-        mutation_cases = [
-            (lambda docs: docs["planning/execution-program.v1.json"]["tasks"][0].__setitem__("status", "BAD"), "PFV-023"),
-            (lambda docs: docs["decisions/decision-registry.v1.json"]["decisions"][0].__setitem__("status", "BAD"), "PFV-061"),
-        ]
-        for mutation, expected in mutation_cases:
-            with self.subTest(expected=expected):
-                mutated = copy.deepcopy(documents)
-                mutation(mutated)
-                self.assertIn(expected, {issue.code for issue in validate_semantics(mutated)})
+        mutated = copy.deepcopy(documents)
+        mutated["planning/execution-program.v1.json"]["tasks"][0]["depends_on"].append("PF-404")
+        self.assertIn("PFV-024", {issue.code for issue in validate_semantics(mutated)})
 
 
 class DecisionIntelligenceTests(unittest.TestCase):
@@ -80,16 +74,20 @@ class DecisionIntelligenceTests(unittest.TestCase):
             def mutate_registry(registry: dict[str, Any]) -> None:
                 mutation(registry["decisions"][index])
             mutate_json(target, "decisions/decision-registry.v1.json", mutate_registry)
-            self.assertIn(expected, issue_codes(target))
+            codes = issue_codes(target)
+            self.assertIn(expected, codes)
+            self.assertNotIn("PFV-199", codes)
             result = run_cli(target)
             self.assertNotEqual(0, result.returncode)
             self.assertIn(expected, result.stderr)
+            self.assertNotIn("PFV-199", result.stderr)
             self.assertNotIn("Traceback", result.stderr)
         finally:
             temporary.cleanup()
 
     def test_accepted_and_research_decision_invariants(self) -> None:
         accepted = [
+            (lambda d: d.__setitem__("status", "BAD"), "PFV-061"),
             (lambda d: d.pop("options_considered"), "PFV-066"),
             (lambda d: d.__setitem__("options_considered", ["only"]), "PFV-066"),
             (lambda d: d.__setitem__("selected_option", None), "PFV-067"),
@@ -132,7 +130,13 @@ class DogfoodingTests(unittest.TestCase):
                 temporary, target = copy_repo()
                 try:
                     mutate_json(target, "dogfooding/dogfooding-registry.v1.json", mutation)
-                    self.assertIn(expected, issue_codes(target))
+                    codes = issue_codes(target)
+                    self.assertIn(expected, codes)
+                    self.assertNotIn("PFV-199", codes)
+                    result = run_cli(target)
+                    self.assertNotEqual(0, result.returncode)
+                    self.assertIn(expected, result.stderr)
+                    self.assertNotIn("Traceback", result.stderr)
                 finally:
                     temporary.cleanup()
 
@@ -167,5 +171,3 @@ class WorkflowHardeningTests(unittest.TestCase):
         for index, mutation in enumerate(mutations):
             with self.subTest(case=index):
                 self._assert_workflow_drift(mutation)
-
-
