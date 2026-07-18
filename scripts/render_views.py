@@ -1,39 +1,35 @@
 #!/usr/bin/env python3
-"""Render critical Markdown views deterministically from canonical JSON state."""
-
+"""Render critical Markdown views from structurally and semantically valid canonical state."""
 from __future__ import annotations
 
 import argparse
-import json
+import sys
 from pathlib import Path
 from typing import Any, Callable
 
-CANONICAL_PATHS = {
-    "constitution": "governance/project-constitution.v1.json",
-    "program": "planning/execution-program.v1.json",
-    "scope": "planning/scope-baseline.v1.json",
-    "state": "planning/current-state.v1.json",
-}
+try:
+    from scripts.validation_core import ValidationIssue
+    from scripts.validation_semantics import load_and_validate_structures, validate_semantics
+except ModuleNotFoundError:
+    from validation_core import ValidationIssue
+    from validation_semantics import load_and_validate_structures, validate_semantics
 
 
-def _load_json(root: Path, relative: str) -> dict[str, Any]:
-    value = json.loads((root / relative).read_text(encoding="utf-8"))
-    if not isinstance(value, dict):
-        raise ValueError(f"{relative} must contain a JSON object")
-    return value
+class RenderInputError(Exception):
+    """Controlled failure carrying deterministic repository diagnostics."""
 
-
-def load_render_state(root: Path) -> dict[str, dict[str, Any]]:
-    return {name: _load_json(root, path) for name, path in CANONICAL_PATHS.items()}
+    def __init__(self, issues: list[ValidationIssue]) -> None:
+        super().__init__("canonical state is not renderable")
+        self.issues = issues
 
 
 def _bullets(values: list[str]) -> str:
     return "\n".join(f"- `{value}`" for value in values)
 
 
-def render_project_charter(data: dict[str, dict[str, Any]]) -> str:
-    constitution = data["constitution"]
-    scope = data["scope"]
+def render_project_charter(documents: dict[str, dict[str, Any]]) -> str:
+    constitution = documents["governance/project-constitution.v1.json"]
+    scope = documents["planning/scope-baseline.v1.json"]
     north_star = constitution["north_star"]
     authority = constitution["authority_model"]
     completion = constitution["completion_rule"]
@@ -94,10 +90,10 @@ A task may be treated as complete only after `{completion['required_lifecycle_st
 """
 
 
-def render_system_map(data: dict[str, dict[str, Any]]) -> str:
-    constitution = data["constitution"]
-    program = data["program"]
-    state = data["state"]
+def render_system_map(documents: dict[str, dict[str, Any]]) -> str:
+    constitution = documents["governance/project-constitution.v1.json"]
+    program = documents["planning/execution-program.v1.json"]
+    state = documents["planning/current-state.v1.json"]
     task_map = {task["id"]: task for task in program["tasks"]}
     sections: list[str] = []
     for work_package in program["work_packages"]:
@@ -111,9 +107,7 @@ def render_system_map(data: dict[str, dict[str, Any]]) -> str:
             f"{task_lines}"
         )
     context = " → ".join(f"`{value}`" for value in state["active_context_path"])
-    controls = "\n".join(
-        f"- `{control}`" for control in constitution["constitutional_controls"]
-    )
+    controls = "\n".join(f"- `{control}`" for control in constitution["constitutional_controls"])
     return f"""<!-- GENERATED FILE. Run: python scripts/render_views.py --write --root . -->
 # Project Foundry System Map
 
@@ -155,11 +149,11 @@ Critical rendered views are generated from canonical state and exact-byte checke
 """
 
 
-def render_next_work(data: dict[str, dict[str, Any]]) -> str:
-    constitution = data["constitution"]
-    program = data["program"]
-    scope = data["scope"]
-    state = data["state"]
+def render_next_work(documents: dict[str, dict[str, Any]]) -> str:
+    constitution = documents["governance/project-constitution.v1.json"]
+    program = documents["planning/execution-program.v1.json"]
+    scope = documents["planning/scope-baseline.v1.json"]
+    state = documents["planning/current-state.v1.json"]
     north_star = constitution["north_star"]
     task_map = {task["id"]: task for task in program["tasks"]}
     current = task_map[state["current_task_id"]]
@@ -224,16 +218,39 @@ RENDERERS: dict[str, Callable[[dict[str, dict[str, Any]]], str]] = {
 }
 
 
+def load_render_documents(root: Path) -> dict[str, dict[str, Any]]:
+    documents, issues = load_and_validate_structures(root)
+    if not issues:
+        issues = validate_semantics(documents)
+    if issues:
+        raise RenderInputError(issues)
+    return documents
+
+
+def render_all_from_documents(documents: dict[str, dict[str, Any]]) -> dict[str, str]:
+    return {path: renderer(documents) for path, renderer in RENDERERS.items()}
+
+
 def render_all(root: Path) -> dict[str, str]:
-    data = load_render_state(root)
-    return {path: renderer(data) for path, renderer in RENDERERS.items()}
+    return render_all_from_documents(load_render_documents(root.resolve()))
 
 
 def write_views(root: Path) -> None:
-    for relative, content in render_all(root).items():
-        path = root / relative
-        path.parent.mkdir(parents=True, exist_ok=True)
-        path.write_text(content, encoding="utf-8", newline="\n")
+    rendered = render_all(root)
+    staged: list[tuple[Path, Path]] = []
+    try:
+        for relative, content in rendered.items():
+            path = root / relative
+            path.parent.mkdir(parents=True, exist_ok=True)
+            temporary = path.with_suffix(path.suffix + ".tmp")
+            temporary.write_text(content, encoding="utf-8", newline="\n")
+            staged.append((temporary, path))
+        for temporary, path in staged:
+            temporary.replace(path)
+    finally:
+        for temporary, _ in staged:
+            if temporary.exists():
+                temporary.unlink()
 
 
 def check_views(root: Path) -> list[str]:
@@ -245,22 +262,37 @@ def check_views(root: Path) -> list[str]:
     return drifted
 
 
-def main() -> int:
+def _print_issues(issues: list[ValidationIssue]) -> None:
+    for issue in issues:
+        print(f"{issue.code}: {issue.message}", file=sys.stderr)
+
+
+def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser()
     parser.add_argument("--root", default=".")
     mode = parser.add_mutually_exclusive_group(required=True)
     mode.add_argument("--write", action="store_true")
     mode.add_argument("--check", action="store_true")
-    args = parser.parse_args()
+    args = parser.parse_args(argv)
     root = Path(args.root).resolve()
-    if args.write:
-        write_views(root)
-        print("Rendered critical views: UPDATED")
-        return 0
-    drifted = check_views(root)
+    try:
+        if args.write:
+            write_views(root)
+            print("Rendered critical views: UPDATED")
+            return 0
+        drifted = check_views(root)
+    except RenderInputError as exc:
+        _print_issues(exc.issues)
+        return 1
+    except OSError as exc:
+        print(f"PFR-002: rendered view I/O failure: {exc}", file=sys.stderr)
+        return 1
+    except Exception as exc:
+        print(f"PFR-199: controlled renderer failure: {type(exc).__name__}: {exc}", file=sys.stderr)
+        return 1
     if drifted:
         for relative in drifted:
-            print(f"PFR-001: rendered view drift: {relative}")
+            print(f"PFR-001: rendered view drift: {relative}", file=sys.stderr)
         return 1
     print("Rendered critical views: PASS")
     return 0
