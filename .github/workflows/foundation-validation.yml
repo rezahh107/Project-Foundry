@@ -42,8 +42,26 @@ jobs:
       - name: Run deterministic repository validation
         run: python scripts/validate_repository.py --root .
 
-      - name: Run validator and mutation tests
-        run: python -m unittest discover -s tests -v
+      - name: Test valid repository boundaries
+        run: python -m unittest -v tests.test_structural_renderer.ValidRepositoryTests
+
+      - name: Test structural mutation corpus
+        run: python -m unittest -v tests.test_structural_renderer.StructuralMutationTests
+
+      - name: Test renderer structural gate
+        run: python -m unittest -v tests.test_structural_renderer.RendererStructuralGateTests
+
+      - name: Test semantic reference corpus
+        run: python -m unittest -v tests.test_semantics_workflow.SemanticReferenceTests
+
+      - name: Test Decision Intelligence gate
+        run: python -m unittest -v tests.test_semantics_workflow.DecisionIntelligenceTests
+
+      - name: Test Dogfooding controls
+        run: python -m unittest -v tests.test_semantics_workflow.DogfoodingTests
+
+      - name: Test workflow bypass corpus
+        run: python -m unittest -v tests.test_semantics_workflow.WorkflowHardeningTests
 
       - name: Compile validation code
         run: python -m compileall -q scripts tests
