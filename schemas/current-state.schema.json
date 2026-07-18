@@ -19,7 +19,25 @@
     "blocked_task_ids": {"type": "array", "items": {"type": "string", "minLength": 1}, "uniqueItems": true},
     "next_task_id": {"type": "string", "minLength": 1},
     "next_action": {"type": "string", "minLength": 10},
-    "evidence_refs": {"type": "array", "items": {"type": ["object", "string"]}, "uniqueItems": true},
+    "evidence_refs": {
+      "type": "array",
+      "items": {
+        "type": ["object", "string"],
+        "additionalProperties": false,
+        "required": ["receipt_type", "verification_type", "subject_kind", "repository", "ref", "subject_sha", "transition_from", "transition_to"],
+        "properties": {
+          "receipt_type": {"type": "string", "minLength": 1},
+          "verification_type": {"type": "string", "minLength": 1},
+          "subject_kind": {"type": "string", "minLength": 1},
+          "repository": {"type": "string", "minLength": 1},
+          "ref": {"type": "string", "minLength": 1},
+          "subject_sha": {"type": "string", "minLength": 1},
+          "transition_from": {"type": "string", "minLength": 1},
+          "transition_to": {"type": "string", "minLength": 1}
+        }
+      },
+      "uniqueItems": true
+    },
     "uncertainties": {"type": "array", "items": {"type": "string", "minLength": 1}},
     "last_transition": {
       "type": "object",
@@ -29,7 +47,25 @@
         "from": {"enum": ["planned", "eligible", "active", "implementation_submitted", "validation_pending", "validated_on_branch", "merge_pending", "merged", "current_main_verified", "complete", "blocked", "invalidated", "superseded"]},
         "to": {"enum": ["planned", "eligible", "active", "implementation_submitted", "validation_pending", "validated_on_branch", "merge_pending", "merged", "current_main_verified", "complete", "blocked", "invalidated", "superseded"]},
         "reason": {"type": "string", "minLength": 1},
-        "evidence_refs": {"type": "array", "items": {"type": ["object", "string"]}, "uniqueItems": true}
+        "evidence_refs": {
+          "type": "array",
+          "items": {
+            "type": ["object", "string"],
+            "additionalProperties": false,
+            "required": ["receipt_type", "verification_type", "subject_kind", "repository", "ref", "subject_sha", "transition_from", "transition_to"],
+            "properties": {
+              "receipt_type": {"type": "string", "minLength": 1},
+              "verification_type": {"type": "string", "minLength": 1},
+              "subject_kind": {"type": "string", "minLength": 1},
+              "repository": {"type": "string", "minLength": 1},
+              "ref": {"type": "string", "minLength": 1},
+              "subject_sha": {"type": "string", "minLength": 1},
+              "transition_from": {"type": "string", "minLength": 1},
+              "transition_to": {"type": "string", "minLength": 1}
+            }
+          },
+          "uniqueItems": true
+        }
       }
     }
   }
