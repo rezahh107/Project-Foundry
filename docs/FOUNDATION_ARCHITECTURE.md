@@ -13,6 +13,21 @@ Required-file gate
 
 Malformed canonical input never reaches semantic business logic. Critical owner views are generated from canonical JSON through one renderer and compared byte-for-byte during validation.
 
+## Program and Scope closure
+
+Semantic validation establishes explicit graph-closure preconditions before rendering:
+
+```text
+every Work Package membership → known Task with matching declaration
+every Task → exactly one membership in its declared Work Package
+
+every active Scope Task → included Work Package
+every active Scope Task → exact active Scope reference
+active context Work Package → current Task declaration and active Scope
+```
+
+`SYSTEM_MAP.md` may iterate Work Package membership lists only because `PFV-031` prevents canonical Tasks from becoming orphaned. `planning/NEXT_WORK.md` may iterate `included_task_ids` only because `PFV-044` and `PFV-045` prevent cross-Work-Package Scope expansion and stale Scope references.
+
 ## CI evidence boundary
 
 The required PR job explicitly checks out the PR Head SHA, prints expected and actual SHAs, and fails closed on mismatch. Synthetic merge validation is not presented as exact-Head evidence.
