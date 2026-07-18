@@ -48,8 +48,11 @@ jobs:
       - name: Test in-process CLI boundary
         run: python -m unittest -v tests.test_valid_api.InProcessCliTests
 
-      - name: Test subprocess CLI boundaries
-        run: python -m unittest -v tests.test_structural_renderer.ValidRepositoryTests.test_real_subprocess_cli_boundaries
+      - name: Test subprocess validator boundary
+        run: python -m unittest -v tests.test_valid_api.SubprocessValidatorTests
+
+      - name: Test malformed renderer subprocess boundary
+        run: python -m unittest -v tests.test_valid_api.SubprocessRendererFailureTests
 
       - name: Test deterministic renderers and workflow
         run: python -m unittest -v tests.test_structural_renderer.ValidRepositoryTests.test_renderers_are_idempotent_and_workflow_is_exact
