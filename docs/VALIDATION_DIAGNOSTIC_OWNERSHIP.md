@@ -14,11 +14,30 @@ Each invalid-state class has one primary diagnostic owner. The complete validato
 | Current-state/transition carrier status shape | `STRUCTURAL_SCHEMA` | `PFV-112` | These fields gate safe interpretation of the current lifecycle carrier. |
 | Decision status vocabulary | `CROSS_DOCUMENT_SEMANTICS` | `PFV-061` | Status-dependent Decision Intelligence rules depend on this domain value. |
 | Non-empty task acceptance criteria | `CROSS_DOCUMENT_SEMANTICS` | `PFV-026` | Readiness/completeness rule rather than array shape. |
-| Reference existence and linkage consistency | `CROSS_DOCUMENT_SEMANTICS` | `PFV-020`–`PFV-059` | Requires multiple canonical documents. |
+| Work Package → Task reference existence and declared-link agreement | `CROSS_DOCUMENT_SEMANTICS` | `PFV-029`, `PFV-030` | Requires Program records and Work Package membership lists together. |
+| Task → declared Work Package membership closure | `CROSS_DOCUMENT_SEMANTICS` | `PFV-031` | Every canonical Task must appear exactly once in its declared Work Package list. |
+| Scope Task → included Work Package closure | `CROSS_DOCUMENT_SEMANTICS` | `PFV-044` | Prevents a Task from entering active Scope while its Work Package remains excluded. |
+| Included Scope Task → exact Scope reference | `CROSS_DOCUMENT_SEMANTICS` | `PFV-045` | Prevents stale or future Scope bindings inside the active Scope baseline. |
+| Other reference existence and linkage consistency | `CROSS_DOCUMENT_SEMANTICS` | `PFV-020`–`PFV-059` | Requires multiple canonical documents. |
 | Lifecycle/evidence sufficiency | `CROSS_DOCUMENT_SEMANTICS` | `PFV-027`, `PFV-028`, `PFV-057` | Meaning depends on state and evidence together. |
 | Decision Intelligence process rules | `CROSS_DOCUMENT_SEMANTICS` | `PFV-060`–`PFV-069` | Status-dependent domain process. |
 | Dogfooding authority and promotion rules | `CROSS_DOCUMENT_SEMANTICS` | `PFV-070`–`PFV-073` | Cross-record authority/evidence behavior. |
 | Deterministic workflow projection | `STRUCTURAL_SCHEMA` equivalent workflow gate | `PFV-136` | Exact-byte workflow contract, not regex evidence. |
+
+## Relationship-closure contract
+
+The Program and active Scope are valid only when both directions of each relationship are closed:
+
+```text
+Work Package → listed Task exists and declares that Work Package
+Task → appears exactly once in the list of its declared Work Package
+
+Scope Work Package set → bounds allowed Scope Tasks
+Scope Task → belongs to an included Work Package
+Scope Task → carries the exact active Scope reference
+```
+
+Renderers may rely on these semantic preconditions. They must not silently project an incomplete Program or a silently expanded Scope.
 
 ## Test layers
 
