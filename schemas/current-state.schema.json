@@ -1,1 +1,36 @@
-{"$schema":"https://json-schema.org/draft/2020-12/schema","$id":"current-state.v1","type":"object","additionalProperties":false,"required":["schema_version","project_id","north_star_id","program_ref","scope_ref","state_version","phase","active_context_path","current_task_id","current_task_status","completed_task_ids","blocked_task_ids","next_task_id","next_action","evidence_refs","uncertainties","last_transition"],"properties":{"schema_version":{"const":"current-state.v1"},"project_id":{"type":"string","minLength":1},"north_star_id":{"type":"string","minLength":1},"program_ref":{"type":"string","minLength":1},"scope_ref":{"type":"string","minLength":1},"state_version":{"type":"string","minLength":1},"phase":{"type":"string","minLength":1},"active_context_path":{"type":"array","minItems":4,"maxItems":4,"items":{"type":"string","minLength":1}},"current_task_id":{"type":"string","minLength":1},"current_task_status":{"enum":["planned","eligible","active","implementation_submitted","validation_pending","validated_on_branch","merge_pending","merged","current_main_verified","complete","blocked","invalidated","superseded"]},"completed_task_ids":{"type":"array","items":{"type":"string","minLength":1},"uniqueItems":true},"blocked_task_ids":{"type":"array","items":{"type":"string","minLength":1},"uniqueItems":true},"next_task_id":{"type":"string","minLength":1},"next_action":{"type":"string","minLength":10},"evidence_refs":{"type":"array","items":{"type":"string","minLength":1},"uniqueItems":true},"uncertainties":{"type":"array","items":{"type":"string","minLength":1}},"last_transition":{"type":"object","additionalProperties":false,"required":["from","to","reason","evidence_refs"],"properties":{"from":{"enum":["planned","eligible","active","implementation_submitted","validation_pending","validated_on_branch","merge_pending","merged","current_main_verified","complete","blocked","invalidated","superseded"]},"to":{"enum":["planned","eligible","active","implementation_submitted","validation_pending","validated_on_branch","merge_pending","merged","current_main_verified","complete","blocked","invalidated","superseded"]},"reason":{"type":"string","minLength":1},"evidence_refs":{"type":"array","items":{"type":"string","minLength":1},"uniqueItems":true}}}}}
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "current-state.v1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schema_version", "project_id", "north_star_id", "program_ref", "scope_ref", "state_version", "phase", "active_context_path", "current_task_id", "current_task_status", "completed_task_ids", "blocked_task_ids", "next_task_id", "next_action", "evidence_refs", "uncertainties", "last_transition"],
+  "properties": {
+    "schema_version": {"const": "current-state.v1"},
+    "project_id": {"type": "string", "minLength": 1},
+    "north_star_id": {"type": "string", "minLength": 1},
+    "program_ref": {"type": "string", "minLength": 1},
+    "scope_ref": {"type": "string", "minLength": 1},
+    "state_version": {"type": "string", "minLength": 1},
+    "phase": {"type": "string", "minLength": 1},
+    "active_context_path": {"type": "array", "minItems": 4, "maxItems": 4, "items": {"type": "string", "minLength": 1}},
+    "current_task_id": {"type": "string", "minLength": 1},
+    "current_task_status": {"enum": ["planned", "eligible", "active", "implementation_submitted", "validation_pending", "validated_on_branch", "merge_pending", "merged", "current_main_verified", "complete", "blocked", "invalidated", "superseded"]},
+    "completed_task_ids": {"type": "array", "items": {"type": "string", "minLength": 1}, "uniqueItems": true},
+    "blocked_task_ids": {"type": "array", "items": {"type": "string", "minLength": 1}, "uniqueItems": true},
+    "next_task_id": {"type": "string", "minLength": 1},
+    "next_action": {"type": "string", "minLength": 10},
+    "evidence_refs": {"type": "array", "items": {"type": ["object", "string"]}, "uniqueItems": true},
+    "uncertainties": {"type": "array", "items": {"type": "string", "minLength": 1}},
+    "last_transition": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["from", "to", "reason", "evidence_refs"],
+      "properties": {
+        "from": {"enum": ["planned", "eligible", "active", "implementation_submitted", "validation_pending", "validated_on_branch", "merge_pending", "merged", "current_main_verified", "complete", "blocked", "invalidated", "superseded"]},
+        "to": {"enum": ["planned", "eligible", "active", "implementation_submitted", "validation_pending", "validated_on_branch", "merge_pending", "merged", "current_main_verified", "complete", "blocked", "invalidated", "superseded"]},
+        "reason": {"type": "string", "minLength": 1},
+        "evidence_refs": {"type": "array", "items": {"type": ["object", "string"]}, "uniqueItems": true}
+      }
+    }
+  }
+}
