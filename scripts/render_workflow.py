@@ -58,8 +58,17 @@ jobs:
       - name: Run deterministic repository validation
         run: python scripts/validate_repository.py --root .
 
-      - name: Test valid repository boundaries
-        run: python -m unittest -v tests.test_structural_renderer.ValidRepositoryTests
+      - name: Test direct validator API
+        run: python -m unittest -v tests.test_valid_api.DirectValidatorApiTests
+
+      - name: Test in-process CLI boundary
+        run: python -m unittest -v tests.test_valid_api.InProcessCliTests
+
+      - name: Test subprocess CLI boundaries
+        run: python -m unittest -v tests.test_structural_renderer.ValidRepositoryTests.test_real_subprocess_cli_boundaries
+
+      - name: Test deterministic renderers and workflow
+        run: python -m unittest -v tests.test_structural_renderer.ValidRepositoryTests.test_renderers_are_idempotent_and_workflow_is_exact
 
       - name: Test structural mutation corpus
         run: python -m unittest -v tests.test_structural_renderer.StructuralMutationTests
