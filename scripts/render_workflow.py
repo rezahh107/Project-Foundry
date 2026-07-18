@@ -14,7 +14,7 @@ WORKFLOW_PATH = ".github/workflows/foundation-validation.yml"
 
 
 def render_foundation_workflow() -> str:
-    return f"""name: Foundation validation
+    return fr"""name: Foundation validation
 
 on:
   pull_request:
