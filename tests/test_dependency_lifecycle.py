@@ -170,6 +170,8 @@ class ProgressCollectionClosureTests(RepairTestBase):
             state = read_json(target, "planning/current-state.v1.json")
             state["blocked_task_ids"] = ["PF-002"]
             write_json(target, "planning/current-state.v1.json", state)
+            rendered = run_subprocess_cli(target, "scripts/render_views.py", "--write")
+            self.assertEqual(0, rendered.returncode, rendered.stderr)
             self.assertEqual(set(), issue_codes(target))
         finally:
             temporary.cleanup()
