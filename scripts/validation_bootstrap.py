@@ -71,7 +71,10 @@ def _json_at(root: Path, sha: str, path: str) -> dict[str, Any] | None:
 def _task(document: dict[str, Any] | None, task_id: str) -> dict[str, Any] | None:
     if document is None:
         return None
-    for item in document.get("tasks", []):
+    tasks = document.get("tasks")
+    if not isinstance(tasks, list):
+        return None
+    for item in tasks:
         if isinstance(item, dict) and item.get("id") == task_id:
             return item
     return None
@@ -202,29 +205,26 @@ def _bootstrap_topology_valid(root: Path) -> bool:
     return _bootstrap_hosted_valid(root)
 
 
-def _linearized_history(root: Path) -> list[str]:
-    head = _value(root, "rev-parse", "HEAD")
-    if head is None:
+def _history_graph(root: Path) -> list[tuple[str, tuple[str, ...]]]:
+    history = _value(root, "rev-list", "--topo-order", "--reverse", "--parents", "HEAD")
+    if not history:
         return []
-    first_parent = _value(root, "rev-list", "--first-parent", "--reverse", head)
-    if not first_parent:
-        return []
-    result: list[str] = []
-    seen: set[str] = set()
-    for sha in first_parent.splitlines():
-        parents = _parents(root, sha)
-        if len(parents) == 2:
-            first, second = parents
-            merge_base = _value(root, "merge-base", first, second)
-            if merge_base:
-                branch = _value(root, "rev-list", "--first-parent", "--reverse", f"{merge_base}..{second}") or ""
-                for branch_sha in branch.splitlines():
-                    if branch_sha not in seen:
-                        result.append(branch_sha)
-                        seen.add(branch_sha)
-        if sha not in seen:
-            result.append(sha)
-            seen.add(sha)
+    graph: list[tuple[str, tuple[str, ...]]] = []
+    for line in history.splitlines():
+        fields = line.split()
+        if fields:
+            graph.append((fields[0], tuple(fields[1:])))
+    return graph
+
+
+def _task_map(program: dict[str, Any]) -> dict[str, dict[str, Any]] | None:
+    tasks = program.get("tasks")
+    if not isinstance(tasks, list):
+        return None
+    result: dict[str, dict[str, Any]] = {}
+    for item in tasks:
+        if isinstance(item, dict) and isinstance(item.get("id"), str):
+            result.setdefault(item["id"], item)
     return result
 
 
@@ -233,17 +233,31 @@ def validate_task_origins(root: Path) -> list[ValidationIssue]:
     if _git(root, "rev-parse", "--is-inside-work-tree").returncode != 0:
         return []
     issues: list[ValidationIssue] = []
-    seen: set[str] = set()
+    task_ids_by_commit: dict[str, set[str]] = {}
     bootstrap_origin_valid = _bootstrap_origin_valid(root)
-    for sha in _linearized_history(root):
+    for sha, parents in _history_graph(root):
+        inherited_task_ids: set[str] = set()
+        for parent in parents:
+            inherited_task_ids.update(task_ids_by_commit.get(parent, set()))
+
         program = _json_at(root, sha, PROGRAM_PATH)
         if program is None:
+            task_ids_by_commit[sha] = set()
             continue
-        for item in program.get("tasks", []):
-            if not isinstance(item, dict) or not isinstance(item.get("id"), str) or item["id"] in seen:
+        tasks = _task_map(program)
+        if tasks is None:
+            issues.append(
+                ValidationIssue(
+                    "PFV-037",
+                    f"task history at {sha} has a non-list tasks collection",
+                )
+            )
+            task_ids_by_commit[sha] = inherited_task_ids
+            continue
+
+        for task_id, item in tasks.items():
+            if task_id in inherited_task_ids:
                 continue
-            task_id = item["id"]
-            seen.add(task_id)
             status = item.get("status")
             evidence = item.get("evidence_refs")
             normal_origin = status == "planned" and evidence == []
@@ -261,6 +275,7 @@ def validate_task_origins(root: Path) -> list[ValidationIssue]:
                         f"task {task_id} first appears at {sha} in {status!r}; new Tasks must begin at planned",
                     )
                 )
+        task_ids_by_commit[sha] = set(tasks)
     return issues
 
 
