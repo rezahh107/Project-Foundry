@@ -52,7 +52,10 @@ class Repo:
         git(self.root, "init", "-b", "main")
         git(self.root, "config", "user.name", "Foundry Test")
         git(self.root, "config", "user.email", "foundry@example.invalid")
-        self.base = self.commit("baseline")
+        self.set_status("planned", "planned", render=False)
+        self.commit("planned task origin")
+        self.set_status("implementation_submitted", "planned")
+        self.base = self.commit("implementation submitted baseline")
 
     def close(self) -> None:
         self.temp.cleanup()

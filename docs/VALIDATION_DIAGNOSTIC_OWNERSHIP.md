@@ -11,6 +11,7 @@ Each invalid-state class has one primary owner. Structural validation protects c
 | Submitted lifecycle edge and current-state agreement | `CROSS_DOCUMENT_SEMANTICS` | `PFV-034` |
 | Submitted transition source versus trusted prior canonical status | `GIT_HISTORY_PROVENANCE` | `PFV-035` |
 | Integration parent structure, supported merge method, branch-state preservation, and exact main-push boundary | `INTEGRATION_BOUNDARY` | `PFV-036` |
+| First immutable appearance of every Task, with one exact repository-bootstrap exception | `TASK_ORIGIN_PROVENANCE` | `PFV-037` |
 | Scope closure and next-task dispatch | `CROSS_DOCUMENT_SEMANTICS` | `PFV-044`–`PFV-046` |
 | Current Task/state/transition receipt-carrier equality | `CROSS_DOCUMENT_SEMANTICS` | `PFV-082` |
 | Completed and blocked progress closure | `CROSS_DOCUMENT_SEMANTICS` | `PFV-083` |
@@ -33,6 +34,8 @@ merge commit  = resulting main integration SHA
 ```
 
 The canonical lifecycle files in the merge commit must be byte-identical to the second parent. Squash and rebase integrations are rejected with `PFV-036` because their one-parent Git shape cannot independently preserve and identify the merged PR lineage under this protocol.
+
+The repository genesis merge is documented in `docs/BOOTSTRAP_COMPATIBILITY.md`. Its exception is bound to exact immutable identities and cannot be reused for later Tasks or integrations.
 
 ## Receipt v2 contract
 
