@@ -1,0 +1,85 @@
+name: Provenance diagnostic
+
+on:
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  collector:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10
+        with:
+          ref: ${{ github.event.pull_request.head.sha }}
+          persist-credentials: false
+          fetch-depth: 0
+      - uses: actions/setup-python@ece7cb06caefa5fff74198d8649806c4678c61a1
+        with:
+          python-version: "3.12"
+      - run: python -m unittest -v tests.test_git_provenance.GitProvenanceIntegrationTests.test_collector_avoids_network_without_candidates
+  branch-chain:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10
+        with: {ref: "${{ github.event.pull_request.head.sha }}", persist-credentials: false, fetch-depth: 0}
+      - uses: actions/setup-python@ece7cb06caefa5fff74198d8649806c4678c61a1
+        with: {python-version: "3.12"}
+      - run: python -m unittest -v tests.test_git_provenance.GitProvenanceIntegrationTests.test_branch_receipt_chain_and_latest_head_only_push
+  invalid-branch:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10
+        with: {ref: "${{ github.event.pull_request.head.sha }}", persist-credentials: false, fetch-depth: 0}
+      - uses: actions/setup-python@ece7cb06caefa5fff74198d8649806c4678c61a1
+        with: {python-version: "3.12"}
+      - run: python -m unittest -v tests.test_git_provenance.GitProvenanceIntegrationTests.test_invalid_or_empty_branch_receipt_cannot_be_laundered
+  merge-boundary:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10
+        with: {ref: "${{ github.event.pull_request.head.sha }}", persist-credentials: false, fetch-depth: 0}
+      - uses: actions/setup-python@ece7cb06caefa5fff74198d8649806c4678c61a1
+        with: {python-version: "3.12"}
+      - run: python -m unittest -v tests.test_git_provenance.GitProvenanceIntegrationTests.test_actual_merge_commit_passes_and_first_parent_cannot_replace_branch
+  wrong-state:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10
+        with: {ref: "${{ github.event.pull_request.head.sha }}", persist-credentials: false, fetch-depth: 0}
+      - uses: actions/setup-python@ece7cb06caefa5fff74198d8649806c4678c61a1
+        with: {python-version: "3.12"}
+      - run: python -m unittest -v tests.test_git_provenance.GitProvenanceIntegrationTests.test_wrong_branch_state_fails
+  squash-rebase:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10
+        with: {ref: "${{ github.event.pull_request.head.sha }}", persist-credentials: false, fetch-depth: 0}
+      - uses: actions/setup-python@ece7cb06caefa5fff74198d8649806c4678c61a1
+        with: {python-version: "3.12"}
+      - run: python -m unittest -v tests.test_git_provenance.GitProvenanceIntegrationTests.test_squash_and_rebase_are_rejected
+  direct-push:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10
+        with: {ref: "${{ github.event.pull_request.head.sha }}", persist-credentials: false, fetch-depth: 0}
+      - uses: actions/setup-python@ece7cb06caefa5fff74198d8649806c4678c61a1
+        with: {python-version: "3.12"}
+      - run: python -m unittest -v tests.test_git_provenance.GitProvenanceIntegrationTests.test_direct_push_and_missing_integration_ci_cannot_be_merge
+  invalid-merge:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10
+        with: {ref: "${{ github.event.pull_request.head.sha }}", persist-credentials: false, fetch-depth: 0}
+      - uses: actions/setup-python@ece7cb06caefa5fff74198d8649806c4678c61a1
+        with: {python-version: "3.12"}
+      - run: python -m unittest -v tests.test_git_provenance.GitProvenanceIntegrationTests.test_invalid_merge_receipt_and_digest_cannot_be_laundered
+  full-chain:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10
+        with: {ref: "${{ github.event.pull_request.head.sha }}", persist-credentials: false, fetch-depth: 0}
+      - uses: actions/setup-python@ece7cb06caefa5fff74198d8649806c4678c61a1
+        with: {python-version: "3.12"}
+      - run: python -m unittest -v tests.test_git_provenance.GitProvenanceIntegrationTests.test_valid_end_to_end_chain_survives_later_commit_and_unlocks_pf002
