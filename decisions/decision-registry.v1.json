@@ -1,0 +1,81 @@
+{
+  "schema_version": "decision-registry.v1",
+  "project_id": "PROJECT-FOUNDRY",
+  "north_star_id": "PF-NORTH-STAR-001",
+  "decisions": [
+    {
+      "id": "DEC-001",
+      "title": "Repository-native canonical state with rendered views",
+      "decision_class": "D3_HIGH_CONSEQUENCE",
+      "status": "accepted_for_foundation_candidate",
+      "question": "How should Project Foundry preserve objective, scope, progress, and resume state across sessions?",
+      "hard_constraints": [
+        "The repository must become the source of truth.",
+        "The non-technical owner needs a simple Persian view.",
+        "Agents need precise machine-readable state.",
+        "The current task must not redefine the North Star."
+      ],
+      "options_considered": [
+        "chat_only_memory",
+        "markdown_only_repository_memory",
+        "canonical_json_plus_rendered_markdown",
+        "external_database_first"
+      ],
+      "criteria_weights": {
+        "technical_fitness": 20,
+        "ai_operability": 20,
+        "owner_usability": 15,
+        "transparency": 15,
+        "evidence_and_validation_quality": 15,
+        "maintainability": 10,
+        "security_and_safety_fit": 5
+      },
+      "selected_option": "canonical_json_plus_rendered_markdown",
+      "rationale": "It preserves repository-native truth, supports deterministic validation, and allows separate owner and agent renderings without requiring an external runtime.",
+      "evidence_refs": [
+        "ADR-0001"
+      ],
+      "reconsideration_triggers": [
+        "multiple_writer_transaction_failures",
+        "unmanageable_state_fragmentation",
+        "need_for_external_runtime_queries"
+      ]
+    },
+    {
+      "id": "DEC-002",
+      "title": "Select MVP dogfooding implementation strategy",
+      "decision_class": "D3_HIGH_CONSEQUENCE",
+      "status": "research_required",
+      "question": "Which implementation strategy should Project Foundry use to observe its own development and extract validated future pipeline rules?",
+      "hard_constraints": [
+        "No always-on background worker is required for MVP.",
+        "No external database is required for MVP.",
+        "The method must be operable by AI and understandable to a non-technical owner.",
+        "Observations must not silently promote themselves into authority.",
+        "Repository and PR evidence must remain usable."
+      ],
+      "options_to_research": [
+        "manual_structured_checkpoints",
+        "git_and_pr_observation_only",
+        "conversation_analysis_only",
+        "append_only_event_sourcing",
+        "receipt_oriented_records",
+        "hybrid_checkpoints_evidence_and_llm_extraction"
+      ],
+      "criteria_weights": {
+        "ai_operability": 25,
+        "technical_fitness": 15,
+        "transparency": 15,
+        "evidence_and_validation_quality": 15,
+        "repository_native_fit": 10,
+        "owner_usability": 10,
+        "maintainability": 5,
+        "security_and_safety_fit": 5
+      },
+      "selected_option": null,
+      "rationale": null,
+      "evidence_refs": [],
+      "reconsideration_triggers": []
+    }
+  ]
+}

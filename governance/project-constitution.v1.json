@@ -1,0 +1,85 @@
+{
+  "schema_version": "project-constitution.v1",
+  "project_id": "PROJECT-FOUNDRY",
+  "constitution_version": "0.1.0",
+  "status": "candidate_pending_merge",
+  "north_star": {
+    "id": "PF-NORTH-STAR-001",
+    "statement": "Build a repository-native, self-hosting system that guides a non-technical owner from a raw idea to a traceable, executable, and verifiable project without losing the original objective, current scope, progress, decisions, or exact next action.",
+    "change_policy": "owner_authorized_versioned_change_only"
+  },
+  "authority_model": {
+    "project_owner": [
+      "goals",
+      "priority",
+      "budget",
+      "scope_approval",
+      "protected_actions",
+      "merge",
+      "release",
+      "deployment"
+    ],
+    "ai_technical_authority": [
+      "research",
+      "strategy_comparison",
+      "architecture",
+      "implementation",
+      "validation",
+      "diagnosis",
+      "bounded_repair"
+    ],
+    "evidence_authority": [
+      "factual_reality",
+      "execution_claims",
+      "validation_claims",
+      "completion_claims"
+    ]
+  },
+  "operating_profile": {
+    "ownership": "personal_single_owner",
+    "owner_technical_profile": "non_technical",
+    "ai_operated": true,
+    "security_priority": "low_with_mandatory_safety_floor",
+    "review_profile": "minimal_evidence_bound",
+    "merge_profile": "owner_controlled",
+    "default_owner_language": "fa",
+    "default_agent_contract_language": "en"
+  },
+  "constitutional_controls": [
+    "north_star_guard",
+    "scope_gate",
+    "progress_gate",
+    "decision_intelligence_gate",
+    "dogfooding_promotion_gate",
+    "verification_authority_transition_separation",
+    "dual_audience_rendering",
+    "tool_execution_evidence",
+    "mandatory_safety_floor"
+  ],
+  "protected_actions": [
+    "change_north_star",
+    "expand_approved_scope",
+    "merge",
+    "release",
+    "deploy",
+    "delete_repository",
+    "change_repository_visibility",
+    "change_repository_permissions",
+    "modify_secrets",
+    "perform_destructive_or_irreversible_operation"
+  ],
+  "completion_rule": {
+    "required_lifecycle_state": "current_main_verified",
+    "evidence_required": true,
+    "agent_claim_alone_is_sufficient": false
+  },
+  "source_profile": {
+    "name": "AI Authority Deterministic Governance",
+    "source_version": "2.5.0",
+    "adoption_mode": "tailored_repository_profile",
+    "bundle_sha256": "450299a201aea9f75400cbbb4debf3c7dbb64cf49bb90ba27ea93d9826df86a3",
+    "ssot_sha256": "a8310ca60ba5577256789b5fcc7c5620a3f24af0deafc3587e8a2a60310d4186",
+    "personal_profile_sha256": "9b7d8cd1f1c1b744b89edb0ada8c882d50cd2aa3d99001e85f88de8c541b44b5",
+    "full_enforcement_claimed": false
+  }
+}

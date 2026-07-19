@@ -1,0 +1,16 @@
+[
+  {"name":"north_star_null","file":"governance/project-constitution.v1.json","path":["north_star"],"value":null,"expected":"PFV-110"},
+  {"name":"operating_profile_null","file":"governance/project-constitution.v1.json","path":["operating_profile"],"value":null,"expected":"PFV-110"},
+  {"name":"completion_rule_null","file":"governance/project-constitution.v1.json","path":["completion_rule"],"value":null,"expected":"PFV-110"},
+  {"name":"criteria_weights_null","file":"decisions/decision-registry.v1.json","path":["decisions",0,"criteria_weights"],"value":null,"expected":"PFV-110"},
+  {"name":"criteria_weights_array","file":"decisions/decision-registry.v1.json","path":["decisions",0,"criteria_weights"],"value":[],"expected":"PFV-110"},
+  {"name":"criteria_weights_string","file":"decisions/decision-registry.v1.json","path":["decisions",0,"criteria_weights","ai_operability"],"value":"20","expected":"PFV-110"},
+  {"name":"criteria_weights_boolean","file":"decisions/decision-registry.v1.json","path":["decisions",0,"criteria_weights","ai_operability"],"value":true,"expected":"PFV-110"},
+  {"name":"tasks_null","file":"planning/execution-program.v1.json","path":["tasks"],"value":null,"expected":"PFV-110"},
+  {"name":"work_package_non_object","file":"planning/execution-program.v1.json","path":["work_packages",0],"value":"not-an-object","expected":"PFV-110"},
+  {"name":"depends_on_null","file":"planning/execution-program.v1.json","path":["tasks",0,"depends_on"],"value":null,"expected":"PFV-110"},
+  {"name":"included_task_ids_null","file":"planning/scope-baseline.v1.json","path":["included_task_ids"],"value":null,"expected":"PFV-110"},
+  {"name":"top_level_array","file":"planning/current-state.v1.json","replace_document":[],"expected":"PFV-110"},
+  {"name":"missing_nested_field","file":"governance/project-constitution.v1.json","delete_path":["north_star","statement"],"expected":"PFV-111"},
+  {"name":"wrong_schema_version","file":"planning/current-state.v1.json","path":["schema_version"],"value":"current-state.v999","expected":"PFV-112"}
+]

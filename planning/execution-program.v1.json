@@ -1,0 +1,299 @@
+{
+  "schema_version": "execution-program.v1",
+  "project_id": "PROJECT-FOUNDRY",
+  "north_star_id": "PF-NORTH-STAR-001",
+  "program_id": "PF-PROGRAM-001",
+  "program_version": "0.1.0",
+  "status": "candidate_pending_merge",
+  "work_packages": [
+    {
+      "id": "WP-01",
+      "title": "Genesis, Constitution, Progress, Decisions, and Dogfooding",
+      "objective": "Establish repository-native memory and controls before domain pipeline implementation.",
+      "task_ids": [
+        "PF-001",
+        "PF-002",
+        "PF-003"
+      ]
+    },
+    {
+      "id": "WP-02",
+      "title": "Idea Maturation Pipeline",
+      "objective": "Transform raw ideas into approved concept packages without losing assumptions or alternatives.",
+      "task_ids": [
+        "PF-010"
+      ]
+    },
+    {
+      "id": "WP-03",
+      "title": "Specification Pipeline",
+      "objective": "Transform approved concepts into baselined requirements, architecture, decisions, verification, and readiness packages.",
+      "task_ids": [
+        "PF-020"
+      ]
+    },
+    {
+      "id": "WP-04",
+      "title": "Bootstrap Package and Repository Binding",
+      "objective": "Seal pre-repository state, bind the correct repository, import artifacts, and activate repository-native authority.",
+      "task_ids": [
+        "PF-030"
+      ]
+    },
+    {
+      "id": "WP-05",
+      "title": "Foundry Kernel",
+      "objective": "Define only shared semantic contracts proven necessary by multiple pipelines.",
+      "task_ids": [
+        "PF-040"
+      ]
+    },
+    {
+      "id": "WP-06",
+      "title": "Repository Foundation Compiler",
+      "objective": "Inspect, reconcile, apply, and validate profile-driven repository foundations.",
+      "task_ids": [
+        "PF-050"
+      ]
+    },
+    {
+      "id": "WP-07",
+      "title": "Execution Program and Task Decomposition",
+      "objective": "Compile approved specifications into traceable work packages, tasks, dependencies, and prompt units.",
+      "task_ids": [
+        "PF-060",
+        "PF-061"
+      ]
+    },
+    {
+      "id": "WP-08",
+      "title": "Serial and Parallel Planning",
+      "objective": "Plan candidate concurrency and re-evaluate live dispatch eligibility.",
+      "task_ids": [
+        "PF-070"
+      ]
+    },
+    {
+      "id": "WP-09",
+      "title": "JIT Prompt Orchestration",
+      "objective": "Generate precise live-state-bound implementation prompt envelopes and rendered prompts.",
+      "task_ids": [
+        "PF-080"
+      ]
+    },
+    {
+      "id": "WP-10",
+      "title": "Completion Verification and Continuity",
+      "objective": "Verify branch, PR, Merge, current-main completion, then preserve exact resume state.",
+      "task_ids": [
+        "PF-090",
+        "PF-091"
+      ]
+    }
+  ],
+  "tasks": [
+    {
+      "id": "PF-001",
+      "work_package_id": "WP-01",
+      "title": "Establish governed repository foundation",
+      "status": "implementation_submitted",
+      "depends_on": [],
+      "scope_ref": "PF-SCOPE-001@0.1.0",
+      "acceptance_criteria": [
+        "North Star, complete program, scope, current state, and next work have canonical carriers.",
+        "Decision Intelligence and Dogfooding protocols are present.",
+        "Cross-file validator and CI workflow pass.",
+        "Completion is not claimed before current-main verification."
+      ],
+      "evidence_refs": []
+    },
+    {
+      "id": "PF-002",
+      "work_package_id": "WP-01",
+      "title": "Research and select the MVP dogfooding implementation strategy",
+      "status": "planned",
+      "depends_on": [
+        "PF-001"
+      ],
+      "scope_ref": "PF-SCOPE-001@0.1.0",
+      "acceptance_criteria": [
+        "Feasible strategies are found from relevant current sources.",
+        "Hard constraints, criteria, weights, uncertainty, and trade-offs are recorded.",
+        "AI operability and owner usability are explicit criteria.",
+        "A bounded MVP strategy is selected and recorded."
+      ],
+      "evidence_refs": []
+    },
+    {
+      "id": "PF-003",
+      "work_package_id": "WP-01",
+      "title": "Run the first self-hosting checkpoint and promote validated foundation lessons",
+      "status": "planned",
+      "depends_on": [
+        "PF-001",
+        "PF-002"
+      ],
+      "scope_ref": "PF-SCOPE-001@0.1.0",
+      "acceptance_criteria": [
+        "Observed challenges are separated from proposed rules.",
+        "Promotion decisions identify carrier and evidence.",
+        "The complete program remains visible after the checkpoint."
+      ],
+      "evidence_refs": []
+    },
+    {
+      "id": "PF-010",
+      "work_package_id": "WP-02",
+      "title": "Design Idea Maturation Pipeline",
+      "status": "planned",
+      "depends_on": [
+        "PF-003"
+      ],
+      "scope_ref": "future_scope",
+      "acceptance_criteria": [
+        "Approved Concept Package contract is defined and tested."
+      ],
+      "evidence_refs": []
+    },
+    {
+      "id": "PF-020",
+      "work_package_id": "WP-03",
+      "title": "Design Specification Pipeline",
+      "status": "planned",
+      "depends_on": [
+        "PF-010"
+      ],
+      "scope_ref": "future_scope",
+      "acceptance_criteria": [
+        "Implementation Readiness Package contract is defined and tested."
+      ],
+      "evidence_refs": []
+    },
+    {
+      "id": "PF-030",
+      "work_package_id": "WP-04",
+      "title": "Design Bootstrap Package and Repository Binding",
+      "status": "planned",
+      "depends_on": [
+        "PF-020"
+      ],
+      "scope_ref": "future_scope",
+      "acceptance_criteria": [
+        "Repository-native activation is identity-bound and evidence-backed."
+      ],
+      "evidence_refs": []
+    },
+    {
+      "id": "PF-040",
+      "work_package_id": "WP-05",
+      "title": "Define minimal Foundry Kernel from proven shared needs",
+      "status": "planned",
+      "depends_on": [
+        "PF-030"
+      ],
+      "scope_ref": "future_scope",
+      "acceptance_criteria": [
+        "Every Kernel concept has multiple consumers or a cross-pipeline invariant."
+      ],
+      "evidence_refs": []
+    },
+    {
+      "id": "PF-050",
+      "work_package_id": "WP-06",
+      "title": "Implement profile-driven Repository Foundation Compiler",
+      "status": "planned",
+      "depends_on": [
+        "PF-040"
+      ],
+      "scope_ref": "future_scope",
+      "acceptance_criteria": [
+        "Foundation reconciliation is idempotent and non-destructive."
+      ],
+      "evidence_refs": []
+    },
+    {
+      "id": "PF-060",
+      "work_package_id": "WP-07",
+      "title": "Implement Execution Program Compiler",
+      "status": "planned",
+      "depends_on": [
+        "PF-050"
+      ],
+      "scope_ref": "future_scope",
+      "acceptance_criteria": [
+        "Tasks are traceable to approved specification baselines."
+      ],
+      "evidence_refs": []
+    },
+    {
+      "id": "PF-061",
+      "work_package_id": "WP-07",
+      "title": "Implement Task Decomposition Compiler",
+      "status": "planned",
+      "depends_on": [
+        "PF-060"
+      ],
+      "scope_ref": "future_scope",
+      "acceptance_criteria": [
+        "Prompt units are atomic, bounded, complete, and non-overlapping."
+      ],
+      "evidence_refs": []
+    },
+    {
+      "id": "PF-070",
+      "work_package_id": "WP-08",
+      "title": "Implement Queue and Concurrency Planner",
+      "status": "planned",
+      "depends_on": [
+        "PF-061"
+      ],
+      "scope_ref": "future_scope",
+      "acceptance_criteria": [
+        "Parallel implementation and Merge ordering are evaluated separately."
+      ],
+      "evidence_refs": []
+    },
+    {
+      "id": "PF-080",
+      "work_package_id": "WP-09",
+      "title": "Implement JIT Prompt Compiler and Dispatch Protocol",
+      "status": "planned",
+      "depends_on": [
+        "PF-070"
+      ],
+      "scope_ref": "future_scope",
+      "acceptance_criteria": [
+        "Prompts are rendered from canonical envelopes bound to live state."
+      ],
+      "evidence_refs": []
+    },
+    {
+      "id": "PF-090",
+      "work_package_id": "WP-10",
+      "title": "Implement Completion Verifier",
+      "status": "planned",
+      "depends_on": [
+        "PF-080"
+      ],
+      "scope_ref": "future_scope",
+      "acceptance_criteria": [
+        "Completion requires exact current-main evidence."
+      ],
+      "evidence_refs": []
+    },
+    {
+      "id": "PF-091",
+      "work_package_id": "WP-10",
+      "title": "Implement Continuity and Rebaseline Engine",
+      "status": "planned",
+      "depends_on": [
+        "PF-090"
+      ],
+      "scope_ref": "future_scope",
+      "acceptance_criteria": [
+        "A new session can recover the exact next safe action without chat memory."
+      ],
+      "evidence_refs": []
+    }
+  ]
+}

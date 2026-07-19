@@ -1,0 +1,37 @@
+{
+  "schema_version": "scope-baseline.v1",
+  "project_id": "PROJECT-FOUNDRY",
+  "north_star_id": "PF-NORTH-STAR-001",
+  "scope_id": "PF-SCOPE-001",
+  "scope_version": "0.1.0",
+  "status": "candidate_pending_merge",
+  "objective": "Establish the repository-native foundation that preserves the complete Project Foundry objective and enables evidence-bound progress, decision intelligence, and dogfooding.",
+  "included_work_package_ids": [
+    "WP-01"
+  ],
+  "included_task_ids": [
+    "PF-001",
+    "PF-002",
+    "PF-003"
+  ],
+  "active_task_id": "PF-001",
+  "explicit_exclusions": [
+    {
+      "item": "Complete domain pipeline implementation",
+      "disposition": "deferred_to_registered_future_work_packages",
+      "authority": "project_owner_instruction"
+    },
+    {
+      "item": "Automatic background monitoring",
+      "disposition": "deferred_pending_decision_intelligence",
+      "authority": "project_owner_instruction"
+    },
+    {
+      "item": "Automatic Merge, Release, or Deployment",
+      "disposition": "protected_owner_action",
+      "authority": "project_constitution"
+    }
+  ],
+  "change_policy": "versioned_owner_authorized_scope_change",
+  "silent_scope_change_allowed": false
+}

@@ -1,0 +1,85 @@
+{
+  "schema_version": "dogfooding-registry.v1",
+  "project_id": "PROJECT-FOUNDRY",
+  "north_star_id": "PF-NORTH-STAR-001",
+  "monitoring_mode": "manual_structured_checkpoints_pending_decision_DEC-002",
+  "observations": [
+    {
+      "id": "OBS-001",
+      "status": "validated_observation",
+      "fact": "During architecture discussion, focus shifted from the complete Project Foundry pipeline to building a minimal Foundry Kernel.",
+      "impact": "The owner identified a risk of forgetting the original objective and later forgetting the reduced interpretation as well.",
+      "source_type": "owner_confirmed_conversation_observation",
+      "source_ref": "FOUNDATION-BOOTSTRAP-2026-07-18",
+      "interpretation": "A current technical subproblem can replace the full objective when North Star, program, scope, and task are not shown together."
+    },
+    {
+      "id": "OBS-002",
+      "status": "validated_observation",
+      "fact": "The owner required every important implementation action to compare feasible methods before selection.",
+      "impact": "Decision Intelligence became a required cross-cutting pipeline rather than an informal recommendation.",
+      "source_type": "owner_instruction",
+      "source_ref": "FOUNDATION-BOOTSTRAP-2026-07-18",
+      "interpretation": "Method selection must be explicit, evidence-based, weighted, and adapted to AI operation."
+    }
+  ],
+  "lesson_candidates": [
+    {
+      "id": "LSN-001",
+      "observation_refs": [
+        "OBS-001"
+      ],
+      "statement": "Always display North Star, full Program, active Scope, and current Task as a single context path.",
+      "generalization_status": "validated_for_foundation",
+      "candidate_carriers": [
+        "progress_and_scope_protocol",
+        "current_state_schema",
+        "repository_validator",
+        "owner_next_work_view"
+      ]
+    },
+    {
+      "id": "LSN-002",
+      "observation_refs": [
+        "OBS-002"
+      ],
+      "statement": "Important implementation methods must pass a Decision Intelligence Gate that includes AI operability and owner usability.",
+      "generalization_status": "validated_for_foundation",
+      "candidate_carriers": [
+        "decision_intelligence_protocol",
+        "decision_registry",
+        "agent_instructions"
+      ]
+    }
+  ],
+  "promotions": [
+    {
+      "id": "PROM-001",
+      "lesson_id": "LSN-001",
+      "status": "promoted_to_foundation_candidate",
+      "authority": "project_owner_instruction",
+      "carrier_refs": [
+        "governance/PROGRESS_AND_SCOPE_PROTOCOL.md",
+        "planning/current-state.v1.json",
+        "scripts/validate_repository.py"
+      ],
+      "evidence_refs": [
+        "OBS-001"
+      ]
+    },
+    {
+      "id": "PROM-002",
+      "lesson_id": "LSN-002",
+      "status": "promoted_to_foundation_candidate",
+      "authority": "project_owner_instruction",
+      "carrier_refs": [
+        "governance/DECISION_INTELLIGENCE_PROTOCOL.md",
+        "decisions/decision-registry.v1.json",
+        "AGENTS.md"
+      ],
+      "evidence_refs": [
+        "OBS-002"
+      ]
+    }
+  ]
+}
