@@ -52,7 +52,7 @@ class Repo:
         git(self.root, "init", "-b", "main")
         git(self.root, "config", "user.name", "Foundry Test")
         git(self.root, "config", "user.email", "foundry@example.invalid")
-        self.set_status("planned", "planned")
+        self.set_status("planned", "planned", render=False)
         self.commit("planned task origin")
         self.set_status("implementation_submitted", "planned")
         self.base = self.commit("implementation submitted baseline")
