@@ -22,34 +22,32 @@ jobs:
           set +e
           python -m unittest -v tests.test_git_provenance.GitProvenanceIntegrationTests.test_branch_receipt_chain_and_latest_head_only_push > /tmp/provenance.log 2>&1
           printf '%s\n' "$?" > /tmp/provenance.rc
+          wc -c < /tmp/provenance.log > /tmp/provenance.bytes
           exit 0
-      - name: Observed SyntaxError
+      - name: Return code is 1
         continue-on-error: true
-        run: '! grep -q "SyntaxError" /tmp/provenance.log'
-      - name: Observed ImportError
+        run: 'test "$(cat /tmp/provenance.rc)" != "1"'
+      - name: Return code is 2
         continue-on-error: true
-        run: '! grep -q "ImportError" /tmp/provenance.log'
-      - name: Observed ModuleNotFoundError
+        run: 'test "$(cat /tmp/provenance.rc)" != "2"'
+      - name: Return code is 124
         continue-on-error: true
-        run: '! grep -q "ModuleNotFoundError\|No module named" /tmp/provenance.log'
-      - name: Observed RuntimeError
+        run: 'test "$(cat /tmp/provenance.rc)" != "124"'
+      - name: Return code is 137
         continue-on-error: true
-        run: '! grep -q "RuntimeError" /tmp/provenance.log'
-      - name: Observed TypeError
+        run: 'test "$(cat /tmp/provenance.rc)" != "137"'
+      - name: Log is empty
         continue-on-error: true
-        run: '! grep -q "TypeError" /tmp/provenance.log'
-      - name: Observed AttributeError
+        run: 'test "$(cat /tmp/provenance.bytes)" != "0"'
+      - name: Observed TimeoutExpired
         continue-on-error: true
-        run: '! grep -q "AttributeError" /tmp/provenance.log'
-      - name: Observed FileNotFoundError
+        run: '! grep -q "TimeoutExpired\|timed out" /tmp/provenance.log'
+      - name: Observed SystemExit
         continue-on-error: true
-        run: '! grep -q "FileNotFoundError\|No such file" /tmp/provenance.log'
-      - name: Observed unittest ERROR
+        run: '! grep -q "SystemExit" /tmp/provenance.log'
+      - name: Observed called process error
         continue-on-error: true
-        run: '! grep -q "ERROR" /tmp/provenance.log'
-      - name: Observed unittest FAIL
-        continue-on-error: true
-        run: '! grep -q "FAIL" /tmp/provenance.log'
+        run: '! grep -q "CalledProcessError\|returned non-zero" /tmp/provenance.log'
       - name: Focused provenance result
         shell: bash
         run: |
