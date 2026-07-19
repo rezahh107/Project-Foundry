@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import os
 import unittest
 
 from scripts.validate_repository import validate
@@ -21,7 +22,9 @@ class InProcessCliTests(unittest.TestCase):
 
 class SubprocessValidatorTests(unittest.TestCase):
     def test_subprocess_validator_is_clean(self) -> None:
-        result = run_subprocess_cli(REPO_ROOT, "scripts/validate_repository.py")
+        hosted_path = os.environ.get("PROJECT_FOUNDRY_HOSTED_PROVENANCE_PATH")
+        env = {"PROJECT_FOUNDRY_HOSTED_PROVENANCE_PATH": hosted_path} if hosted_path else None
+        result = run_subprocess_cli(REPO_ROOT, "scripts/validate_repository.py", env=env)
         self.assertEqual(0, result.returncode, result.stderr)
         self.assertIn("validation: PASS", result.stdout)
 
