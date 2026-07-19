@@ -16,5 +16,36 @@ jobs:
           persist-credentials: false
           fetch-depth: 1
           show-progress: false
-      - name: Run focused provenance test
-        run: python -m unittest -v tests.test_git_provenance.GitProvenanceIntegrationTests.test_branch_receipt_chain_and_latest_head_only_push
+      - name: Capture focused provenance failure
+        shell: bash
+        run: |
+          set +e
+          python -m unittest -v tests.test_git_provenance.GitProvenanceIntegrationTests.test_branch_receipt_chain_and_latest_head_only_push > /tmp/provenance.log 2>&1
+          printf '%s\n' "$?" > /tmp/provenance.rc
+          exit 0
+      - name: Observed PFV-034
+        continue-on-error: true
+        run: '! grep -q "PFV-034" /tmp/provenance.log'
+      - name: Observed PFV-035
+        continue-on-error: true
+        run: '! grep -q "PFV-035" /tmp/provenance.log'
+      - name: Observed PFV-036
+        continue-on-error: true
+        run: '! grep -q "PFV-036" /tmp/provenance.log'
+      - name: Observed PFV-037
+        continue-on-error: true
+        run: '! grep -q "PFV-037" /tmp/provenance.log'
+      - name: Observed PFV-084
+        continue-on-error: true
+        run: '! grep -q "PFV-084" /tmp/provenance.log'
+      - name: Observed PFV-086
+        continue-on-error: true
+        run: '! grep -q "PFV-086" /tmp/provenance.log'
+      - name: Observed PFV-087
+        continue-on-error: true
+        run: '! grep -q "PFV-087" /tmp/provenance.log'
+      - name: Focused provenance result
+        shell: bash
+        run: |
+          tail -n 40 /tmp/provenance.log
+          test "$(cat /tmp/provenance.rc)" = "0"
