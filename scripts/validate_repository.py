@@ -8,12 +8,14 @@ from pathlib import Path
 
 try:
     from scripts.render_views import render_all_from_documents
+    from scripts.validation_bootstrap import apply_bootstrap_compatibility
     from scripts.validation_core import RENDER_DIAGNOSTICS, REQUIRED_FILES, ValidationIssue
     from scripts.validation_execution import validate_execution_controls
     from scripts.validation_semantics import load_and_validate_structures, validate_semantics
     from scripts.validation_workflow import validate_workflow
 except ModuleNotFoundError:
     from render_views import render_all_from_documents
+    from validation_bootstrap import apply_bootstrap_compatibility
     from validation_core import RENDER_DIAGNOSTICS, REQUIRED_FILES, ValidationIssue
     from validation_execution import validate_execution_controls
     from validation_semantics import load_and_validate_structures, validate_semantics
@@ -53,6 +55,7 @@ def validate(root: Path) -> list[ValidationIssue]:
     try:
         issues.extend(validate_semantics(documents))
         issues.extend(validate_execution_controls(documents, root=root))
+        issues = apply_bootstrap_compatibility(root, issues)
     except Exception as exc:
         return [
             ValidationIssue(
