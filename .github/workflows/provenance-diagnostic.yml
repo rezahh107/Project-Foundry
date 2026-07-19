@@ -23,27 +23,30 @@ jobs:
           python -m unittest -v tests.test_git_provenance.GitProvenanceIntegrationTests.test_branch_receipt_chain_and_latest_head_only_push > /tmp/provenance.log 2>&1
           printf '%s\n' "$?" > /tmp/provenance.rc
           exit 0
-      - name: Observed PFV-034
+      - name: Observed PFR diagnostic
         continue-on-error: true
-        run: '! grep -q "PFV-034" /tmp/provenance.log'
-      - name: Observed PFV-035
+        run: '! grep -q "PFR-" /tmp/provenance.log'
+      - name: Observed AssertionError
         continue-on-error: true
-        run: '! grep -q "PFV-035" /tmp/provenance.log'
-      - name: Observed PFV-036
+        run: '! grep -q "AssertionError" /tmp/provenance.log'
+      - name: Observed KeyError
         continue-on-error: true
-        run: '! grep -q "PFV-036" /tmp/provenance.log'
-      - name: Observed PFV-037
+        run: '! grep -q "KeyError" /tmp/provenance.log'
+      - name: Observed ValueError
         continue-on-error: true
-        run: '! grep -q "PFV-037" /tmp/provenance.log'
-      - name: Observed PFV-084
+        run: '! grep -q "ValueError" /tmp/provenance.log'
+      - name: Observed JSON error
         continue-on-error: true
-        run: '! grep -q "PFV-084" /tmp/provenance.log'
-      - name: Observed PFV-086
+        run: '! grep -q "JSONDecodeError\|JSON" /tmp/provenance.log'
+      - name: Observed Git assertion
         continue-on-error: true
-        run: '! grep -q "PFV-086" /tmp/provenance.log'
-      - name: Observed PFV-087
+        run: '! grep -q "git .* failed\|fatal:" /tmp/provenance.log'
+      - name: Observed unittest failure
         continue-on-error: true
-        run: '! grep -q "PFV-087" /tmp/provenance.log'
+        run: '! grep -q "FAILED\|ERROR:" /tmp/provenance.log'
+      - name: Observed render failure
+        continue-on-error: true
+        run: '! grep -q "render\|Render" /tmp/provenance.log'
       - name: Focused provenance result
         shell: bash
         run: |
