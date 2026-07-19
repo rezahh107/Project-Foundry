@@ -25,30 +25,31 @@ jobs:
           wc -c < /tmp/provenance.log > /tmp/provenance.bytes
           exit 0
       - name: Return code is 1
-        continue-on-error: true
+        if: always()
         run: 'test "$(cat /tmp/provenance.rc)" != "1"'
       - name: Return code is 2
-        continue-on-error: true
+        if: always()
         run: 'test "$(cat /tmp/provenance.rc)" != "2"'
       - name: Return code is 124
-        continue-on-error: true
+        if: always()
         run: 'test "$(cat /tmp/provenance.rc)" != "124"'
       - name: Return code is 137
-        continue-on-error: true
+        if: always()
         run: 'test "$(cat /tmp/provenance.rc)" != "137"'
       - name: Log is empty
-        continue-on-error: true
+        if: always()
         run: 'test "$(cat /tmp/provenance.bytes)" != "0"'
-      - name: Observed TimeoutExpired
-        continue-on-error: true
-        run: '! grep -q "TimeoutExpired\|timed out" /tmp/provenance.log'
-      - name: Observed SystemExit
-        continue-on-error: true
-        run: '! grep -q "SystemExit" /tmp/provenance.log'
-      - name: Observed called process error
-        continue-on-error: true
-        run: '! grep -q "CalledProcessError\|returned non-zero" /tmp/provenance.log'
+      - name: Observed PFV diagnostic
+        if: always()
+        run: '! grep -q "PFV-" /tmp/provenance.log'
+      - name: Observed Python exception
+        if: always()
+        run: '! grep -Eq "(AssertionError|SyntaxError|ImportError|ModuleNotFoundError|RuntimeError|TypeError|AttributeError|FileNotFoundError|TimeoutExpired|SystemExit)" /tmp/provenance.log'
+      - name: Observed unittest failure marker
+        if: always()
+        run: '! grep -Eq "(FAIL|ERROR)" /tmp/provenance.log'
       - name: Focused provenance result
+        if: always()
         shell: bash
         run: |
           tail -n 40 /tmp/provenance.log
