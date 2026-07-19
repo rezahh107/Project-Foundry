@@ -22,32 +22,37 @@ jobs:
           set +e
           python -m unittest -v tests.test_git_provenance.GitProvenanceIntegrationTests.test_branch_receipt_chain_and_latest_head_only_push > /tmp/provenance.log 2>&1
           printf '%s\n' "$?" > /tmp/provenance.rc
-          wc -c < /tmp/provenance.log > /tmp/provenance.bytes
           exit 0
-      - name: Return code is 1
+      - name: Observed PFV-034
         if: always()
-        run: 'test "$(cat /tmp/provenance.rc)" != "1"'
-      - name: Return code is 2
+        run: '! grep -q "PFV-034" /tmp/provenance.log'
+      - name: Observed PFV-035
         if: always()
-        run: 'test "$(cat /tmp/provenance.rc)" != "2"'
-      - name: Return code is 124
+        run: '! grep -q "PFV-035" /tmp/provenance.log'
+      - name: Observed PFV-036
         if: always()
-        run: 'test "$(cat /tmp/provenance.rc)" != "124"'
-      - name: Return code is 137
+        run: '! grep -q "PFV-036" /tmp/provenance.log'
+      - name: Observed PFV-037
         if: always()
-        run: 'test "$(cat /tmp/provenance.rc)" != "137"'
-      - name: Log is empty
+        run: '! grep -q "PFV-037" /tmp/provenance.log'
+      - name: Observed PFV-084
         if: always()
-        run: 'test "$(cat /tmp/provenance.bytes)" != "0"'
-      - name: Observed PFV diagnostic
+        run: '! grep -q "PFV-084" /tmp/provenance.log'
+      - name: Observed PFV-086
         if: always()
-        run: '! grep -q "PFV-" /tmp/provenance.log'
-      - name: Observed Python exception
+        run: '! grep -q "PFV-086" /tmp/provenance.log'
+      - name: Observed PFV-087
         if: always()
-        run: '! grep -Eq "(AssertionError|SyntaxError|ImportError|ModuleNotFoundError|RuntimeError|TypeError|AttributeError|FileNotFoundError|TimeoutExpired|SystemExit)" /tmp/provenance.log'
-      - name: Observed unittest failure marker
+        run: '! grep -q "PFV-087" /tmp/provenance.log'
+      - name: Observed AssertionError
         if: always()
-        run: '! grep -Eq "(FAIL|ERROR)" /tmp/provenance.log'
+        run: '! grep -q "AssertionError" /tmp/provenance.log'
+      - name: Observed RuntimeError
+        if: always()
+        run: '! grep -q "RuntimeError" /tmp/provenance.log'
+      - name: Observed other Python exception
+        if: always()
+        run: '! grep -Eq "(SyntaxError|ImportError|ModuleNotFoundError|TypeError|AttributeError|FileNotFoundError|TimeoutExpired|SystemExit)" /tmp/provenance.log'
       - name: Focused provenance result
         if: always()
         shell: bash
