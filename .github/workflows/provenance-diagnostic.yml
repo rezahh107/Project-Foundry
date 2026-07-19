@@ -23,30 +23,33 @@ jobs:
           python -m unittest -v tests.test_git_provenance.GitProvenanceIntegrationTests.test_branch_receipt_chain_and_latest_head_only_push > /tmp/provenance.log 2>&1
           printf '%s\n' "$?" > /tmp/provenance.rc
           exit 0
-      - name: Observed PFR diagnostic
+      - name: Observed SyntaxError
         continue-on-error: true
-        run: '! grep -q "PFR-" /tmp/provenance.log'
-      - name: Observed AssertionError
+        run: '! grep -q "SyntaxError" /tmp/provenance.log'
+      - name: Observed ImportError
         continue-on-error: true
-        run: '! grep -q "AssertionError" /tmp/provenance.log'
-      - name: Observed KeyError
+        run: '! grep -q "ImportError" /tmp/provenance.log'
+      - name: Observed ModuleNotFoundError
         continue-on-error: true
-        run: '! grep -q "KeyError" /tmp/provenance.log'
-      - name: Observed ValueError
+        run: '! grep -q "ModuleNotFoundError\|No module named" /tmp/provenance.log'
+      - name: Observed RuntimeError
         continue-on-error: true
-        run: '! grep -q "ValueError" /tmp/provenance.log'
-      - name: Observed JSON error
+        run: '! grep -q "RuntimeError" /tmp/provenance.log'
+      - name: Observed TypeError
         continue-on-error: true
-        run: '! grep -q "JSONDecodeError\|JSON" /tmp/provenance.log'
-      - name: Observed Git assertion
+        run: '! grep -q "TypeError" /tmp/provenance.log'
+      - name: Observed AttributeError
         continue-on-error: true
-        run: '! grep -q "git .* failed\|fatal:" /tmp/provenance.log'
-      - name: Observed unittest failure
+        run: '! grep -q "AttributeError" /tmp/provenance.log'
+      - name: Observed FileNotFoundError
         continue-on-error: true
-        run: '! grep -q "FAILED\|ERROR:" /tmp/provenance.log'
-      - name: Observed render failure
+        run: '! grep -q "FileNotFoundError\|No such file" /tmp/provenance.log'
+      - name: Observed unittest ERROR
         continue-on-error: true
-        run: '! grep -q "render\|Render" /tmp/provenance.log'
+        run: '! grep -q "ERROR" /tmp/provenance.log'
+      - name: Observed unittest FAIL
+        continue-on-error: true
+        run: '! grep -q "FAIL" /tmp/provenance.log'
       - name: Focused provenance result
         shell: bash
         run: |
