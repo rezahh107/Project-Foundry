@@ -1,4 +1,4 @@
-# One-time owner-authorized PF-001 lifecycle reconciliation.
+# One-time owner-authorized PF-001 lifecycle reconciliation — rebuilt after CI harness repair.
 name: Foundation reconciliation
 
 on:
