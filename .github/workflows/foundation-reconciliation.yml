@@ -1,4 +1,4 @@
-# One-time owner-authorized activation.
+# One-time owner-authorized activation with fail-closed resume support.
 name: Foundation reconciliation
 
 on:
@@ -33,16 +33,35 @@ jobs:
           ref: ${{ github.sha }}
           fetch-depth: 0
           persist-credentials: true
-      - name: Create validated branch receipt
+      - name: Create or resume validated branch receipt
         shell: bash
         run: |
           set -euo pipefail
           git config user.name 'Project Foundry Reconciler'
           git config user.email 'project-foundry-reconciler@users.noreply.github.com'
+
           if git ls-remote --exit-code --heads origin "$RECONCILIATION_BRANCH" >/dev/null 2>&1; then
-            echo "Reconciliation branch already exists; refusing duplicate initialization." >&2
-            exit 1
+            git fetch origin "$RECONCILIATION_BRANCH"
+            git switch -C "$RECONCILIATION_BRANCH" "origin/$RECONCILIATION_BRANCH"
+            status="$(python - <<'PY'
+          import json
+          data=json.load(open('planning/current-state.v1.json', encoding='utf-8'))
+          print(data['current_task_status'])
+          PY
+            )"
+            test "$status" = 'validation_pending'
+            subject_sha="$(git rev-parse HEAD)"
+            pr_number="$(gh pr list --repo "$GITHUB_REPOSITORY" --head "$RECONCILIATION_BRANCH" --state open --json number --jq 'if length == 1 then .[0].number else error("expected one open reconciliation PR") end')"
+            python scripts/foundation_reconcile.py validated-on-branch \
+              --subject-sha "$subject_sha" \
+              --pr-number "$pr_number" \
+              --branch "$RECONCILIATION_BRANCH"
+            git add planning/execution-program.v1.json planning/current-state.v1.json PROJECT_CHARTER.md SYSTEM_MAP.md planning/NEXT_WORK.md
+            git commit -m 'Record exact PF-001 branch validation receipt'
+            git push origin "HEAD:$RECONCILIATION_BRANCH"
+            exit 0
           fi
+
           git switch -c "$RECONCILIATION_BRANCH"
           python scripts/foundation_reconcile.py validation-pending
           git add planning/execution-program.v1.json planning/current-state.v1.json PROJECT_CHARTER.md SYSTEM_MAP.md planning/NEXT_WORK.md
