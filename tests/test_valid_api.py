@@ -1,10 +1,15 @@
 from __future__ import annotations
 
-import os
 import unittest
 
 from scripts.validate_repository import validate
-from tests.support import REPO_ROOT, copy_repo, run_cli, run_subprocess_cli
+from tests.support import (
+    REPO_ROOT,
+    copy_repo,
+    current_validation_env,
+    run_cli,
+    run_subprocess_cli,
+)
 
 
 class DirectValidatorApiTests(unittest.TestCase):
@@ -15,16 +20,18 @@ class DirectValidatorApiTests(unittest.TestCase):
 
 class InProcessCliTests(unittest.TestCase):
     def test_in_process_cli_is_clean(self) -> None:
-        result = run_cli(REPO_ROOT)
+        result = run_cli(REPO_ROOT, env=current_validation_env())
         self.assertEqual(0, result.returncode, result.stderr)
         self.assertIn("validation: PASS", result.stdout)
 
 
 class SubprocessValidatorTests(unittest.TestCase):
     def test_subprocess_validator_is_clean(self) -> None:
-        hosted_path = os.environ.get("PROJECT_FOUNDRY_HOSTED_PROVENANCE_PATH")
-        env = {"PROJECT_FOUNDRY_HOSTED_PROVENANCE_PATH": hosted_path} if hosted_path else None
-        result = run_subprocess_cli(REPO_ROOT, "scripts/validate_repository.py", env=env)
+        result = run_subprocess_cli(
+            REPO_ROOT,
+            "scripts/validate_repository.py",
+            env=current_validation_env(),
+        )
         self.assertEqual(0, result.returncode, result.stderr)
         self.assertIn("validation: PASS", result.stdout)
 
