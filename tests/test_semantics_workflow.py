@@ -36,7 +36,15 @@ class SemanticReferenceTests(unittest.TestCase):
             ("unknown_dep", "planning/execution-program.v1.json", lambda d: d["tasks"][0]["depends_on"].append("PF-404"), "PFV-024"),
             ("self_dep", "planning/execution-program.v1.json", lambda d: d["tasks"][0]["depends_on"].append("PF-001"), "PFV-025"),
             ("no_acceptance", "planning/execution-program.v1.json", lambda d: d["tasks"][0].__setitem__("acceptance_criteria", []), "PFV-026"),
-            ("completion_no_evidence", "planning/execution-program.v1.json", lambda d: d["tasks"][0].__setitem__("status", "current_main_verified"), "PFV-027"),
+            (
+                "completion_no_evidence",
+                "planning/execution-program.v1.json",
+                lambda d: (
+                    d["tasks"][0].__setitem__("status", "current_main_verified"),
+                    d["tasks"][0].__setitem__("evidence_refs", []),
+                ),
+                "PFV-027",
+            ),
             ("complete_state", "planning/execution-program.v1.json", lambda d: (d["tasks"][0].__setitem__("status", "complete"), d["tasks"][0].__setitem__("evidence_refs", ["e"])), "PFV-028"),
             ("wp_unknown_task", "planning/execution-program.v1.json", lambda d: d["work_packages"][0]["task_ids"].append("PF-404"), "PFV-029"),
             ("wp_link_mismatch", "planning/execution-program.v1.json", lambda d: d["work_packages"][0]["task_ids"].append("PF-010"), "PFV-030"),
