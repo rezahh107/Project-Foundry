@@ -12,11 +12,10 @@ jobs:
     runs-on: ubuntu-latest
     env:
       GH_TOKEN: ${{ github.token }}
-      TARGET_RUN_ID: "29744194517"
     steps:
-      - name: Print target workflow run metadata
+      - name: Print latest reconciliation runs
         shell: bash
         run: |
           set -euo pipefail
-          gh api "repos/$GITHUB_REPOSITORY/actions/runs/$TARGET_RUN_ID" \
-            --jq '{id, event, status, conclusion, head_sha, head_branch, run_attempt, actor: .actor.login, triggering_actor: .triggering_actor.login, head_repository: .head_repository.full_name, pull_requests}'
+          gh api "repos/$GITHUB_REPOSITORY/actions/workflows/foundation-reconciliation.yml/runs?per_page=10" \
+            --jq '.workflow_runs[] | {id, event, status, conclusion, head_sha, head_branch, run_attempt, created_at}'
