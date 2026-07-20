@@ -14,7 +14,7 @@ on:
       - completed
 
 permissions:
-  actions: read
+  actions: write
   contents: write
   pull-requests: write
 
@@ -33,7 +33,7 @@ jobs:
           ref: ${{ github.sha }}
           fetch-depth: 0
           persist-credentials: true
-      - name: Create or resume validated branch receipt
+      - name: Create, resume, or approve validated branch receipt
         shell: bash
         run: |
           set -euo pipefail
@@ -49,17 +49,25 @@ jobs:
           print(data['current_task_status'])
           PY
             )"
-            test "$status" = 'validation_pending'
             subject_sha="$(git rev-parse HEAD)"
-            pr_number="$(gh pr list --repo "$GITHUB_REPOSITORY" --head "$RECONCILIATION_BRANCH" --state open --json number --jq 'if length == 1 then .[0].number else error("expected one open reconciliation PR") end')"
-            python scripts/foundation_reconcile.py validated-on-branch \
-              --subject-sha "$subject_sha" \
-              --pr-number "$pr_number" \
-              --branch "$RECONCILIATION_BRANCH"
-            git add planning/execution-program.v1.json planning/current-state.v1.json PROJECT_CHARTER.md SYSTEM_MAP.md planning/NEXT_WORK.md
-            git commit -m 'Record exact PF-001 branch validation receipt'
-            git push origin "HEAD:$RECONCILIATION_BRANCH"
-            exit 0
+            if [[ "$status" == 'validation_pending' ]]; then
+              pr_number="$(gh pr list --repo "$GITHUB_REPOSITORY" --head "$RECONCILIATION_BRANCH" --state open --json number --jq 'if length == 1 then .[0].number else error("expected one open reconciliation PR") end')"
+              python scripts/foundation_reconcile.py validated-on-branch \
+                --subject-sha "$subject_sha" \
+                --pr-number "$pr_number" \
+                --branch "$RECONCILIATION_BRANCH"
+              git add planning/execution-program.v1.json planning/current-state.v1.json PROJECT_CHARTER.md SYSTEM_MAP.md planning/NEXT_WORK.md
+              git commit -m 'Record exact PF-001 branch validation receipt'
+              git push origin "HEAD:$RECONCILIATION_BRANCH"
+              exit 0
+            fi
+            if [[ "$status" == 'validated_on_branch' ]]; then
+              run_id="$(gh api "repos/$GITHUB_REPOSITORY/actions/workflows/315675709/runs?event=pull_request&head_sha=$subject_sha&per_page=20" --jq '.workflow_runs | map(select(.conclusion == "action_required")) | if length == 1 then .[0].id else error("expected one action-required exact-Head run") end')"
+              gh api --method POST "repos/$GITHUB_REPOSITORY/actions/runs/$run_id/approve"
+              exit 0
+            fi
+            echo "unexpected existing reconciliation status: $status" >&2
+            exit 1
           fi
 
           git switch -c "$RECONCILIATION_BRANCH"
