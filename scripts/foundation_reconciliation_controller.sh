@@ -100,6 +100,7 @@ PY
     git push --force origin "HEAD:$RECEIPT_BRANCH"
   elif [[ "$status" == 'merged' ]]; then
     python scripts/foundation_reconcile.py current-main-verified
+    rm -f scripts/foundation_reconciliation_controller.sh
     git add -A
     git commit -m 'Verify PF-001 on current main and activate PF-002'
     git push --force origin "HEAD:$RECEIPT_BRANCH"
