@@ -1,4 +1,4 @@
-"""Identity-bound compatibility for the validator-bootstrap repair merge."""
+"""Identity-bound compatibility for the two post-genesis bootstrap merges."""
 from __future__ import annotations
 
 import json
@@ -24,6 +24,11 @@ REPAIR_BASE_COMMIT = "c44ced1d858bd0d1b6d690e47ae12355c79166ca"
 REPAIR_PR_HEAD = "0d997d0429c2e3099e9ec5a09c83eea69f14a6ab"
 REPAIR_INTEGRATION_COMMIT = "cac31e13815a7c52d436fcf34f65dbe997980a37"
 REPAIR_PR_NUMBER = 2
+
+TRUST_BASE_COMMIT = "cac31e13815a7c52d436fcf34f65dbe997980a37"
+TRUST_PR_HEAD = "01ead12c071d925de5e98994116afe66f830ac47"
+TRUST_INTEGRATION_COMMIT = "6cebe25fec6bac15b9aa82eedc8a4cdc1a7eebe3"
+TRUST_PR_NUMBER = 3
 
 
 def _git(root: Path, *args: str) -> subprocess.CompletedProcess[str]:
@@ -87,18 +92,25 @@ def _hosted_payload(root: Path) -> dict[str, Any] | None:
     return payload
 
 
-def _exact_repair_boundary_valid(root: Path) -> bool:
+def _exact_boundary_valid(
+    root: Path,
+    *,
+    base: str,
+    pr_head: str,
+    integration: str,
+    pr_number: int,
+) -> bool:
     head = _value(root, "rev-parse", "HEAD")
-    if head is None or not _ancestor(root, REPAIR_INTEGRATION_COMMIT, head):
+    if head is None or not _ancestor(root, integration, head):
         return False
-    if _parents(root, REPAIR_INTEGRATION_COMMIT) != [REPAIR_BASE_COMMIT, REPAIR_PR_HEAD]:
+    if _parents(root, integration) != [base, pr_head]:
         return False
     if _git(
         root,
         "diff",
         "--quiet",
-        REPAIR_PR_HEAD,
-        REPAIR_INTEGRATION_COMMIT,
+        pr_head,
+        integration,
         "--",
         PROGRAM_PATH,
         STATE_PATH,
@@ -111,24 +123,24 @@ def _exact_repair_boundary_valid(root: Path) -> bool:
     records = [
         item
         for item in payload["merge_records"]
-        if isinstance(item, dict) and item.get("integration_sha") == REPAIR_INTEGRATION_COMMIT
+        if isinstance(item, dict) and item.get("integration_sha") == integration
     ]
     if len(records) != 1:
         return False
     record = records[0]
     merge_valid = (
         record.get("repository") == REPOSITORY
-        and record.get("merge_commit_sha") == REPAIR_INTEGRATION_COMMIT
+        and record.get("merge_commit_sha") == integration
         and record.get("merged") is True
         and record.get("merge_method") == "merge_commit"
-        and record.get("pr_number") == REPAIR_PR_NUMBER
-        and record.get("pr_head_sha") == REPAIR_PR_HEAD
-        and record.get("base_sha") == REPAIR_BASE_COMMIT
+        and record.get("pr_number") == pr_number
+        and record.get("pr_head_sha") == pr_head
+        and record.get("base_sha") == base
         and record.get("base_ref") == "main"
     )
     pr_ci_valid = any(
         isinstance(run, dict)
-        and run.get("commit_sha") == REPAIR_PR_HEAD
+        and run.get("commit_sha") == pr_head
         and run.get("workflow_name") == WORKFLOW_NAME
         and run.get("event") == "pull_request"
         and run.get("conclusion") == "success"
@@ -137,20 +149,49 @@ def _exact_repair_boundary_valid(root: Path) -> bool:
     return bool(merge_valid and pr_ci_valid)
 
 
-def apply_followup_bootstrap_compatibility(
-    root: Path, issues: list[ValidationIssue]
-) -> list[ValidationIssue]:
-    """Suppress only the two exact false positives caused by merging PR #2."""
-    if not _exact_repair_boundary_valid(root.resolve()):
-        return list(issues)
-    allowed = {
+def _exact_repair_boundary_valid(root: Path) -> bool:
+    return _exact_boundary_valid(
+        root,
+        base=REPAIR_BASE_COMMIT,
+        pr_head=REPAIR_PR_HEAD,
+        integration=REPAIR_INTEGRATION_COMMIT,
+        pr_number=REPAIR_PR_NUMBER,
+    )
+
+
+def _exact_trust_boundary_valid(root: Path) -> bool:
+    return _exact_boundary_valid(
+        root,
+        base=TRUST_BASE_COMMIT,
+        pr_head=TRUST_PR_HEAD,
+        integration=TRUST_INTEGRATION_COMMIT,
+        pr_number=TRUST_PR_NUMBER,
+    )
+
+
+def _allowed_for(integration: str) -> set[tuple[str, str]]:
+    return {
         (
             "PFV-036",
-            f"integration {REPAIR_INTEGRATION_COMMIT} does not integrate the canonical active Task at merge_pending",
+            f"integration {integration} does not integrate the canonical active Task at merge_pending",
         ),
         (
             "PFV-086",
-            f"historical integration {REPAIR_INTEGRATION_COMMIT} lacks a successful exact-SHA push workflow",
+            f"historical integration {integration} lacks a successful exact-SHA push workflow",
         ),
     }
+
+
+def apply_followup_bootstrap_compatibility(
+    root: Path, issues: list[ValidationIssue]
+) -> list[ValidationIssue]:
+    """Suppress only exact, evidence-bound false positives from PR #2 and PR #3."""
+    root = root.resolve()
+    allowed: set[tuple[str, str]] = set()
+    if _exact_repair_boundary_valid(root):
+        allowed.update(_allowed_for(REPAIR_INTEGRATION_COMMIT))
+    if _exact_trust_boundary_valid(root):
+        allowed.update(_allowed_for(TRUST_INTEGRATION_COMMIT))
+    if not allowed:
+        return list(issues)
     return [issue for issue in issues if (issue.code, issue.message) not in allowed]
