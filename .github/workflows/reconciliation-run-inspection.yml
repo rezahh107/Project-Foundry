@@ -35,5 +35,11 @@ jobs:
           provenance_path="$RUNNER_TEMP/project-foundry-hosted-provenance.json"
           python scripts/collect_hosted_provenance.py --root . --output "$provenance_path"
           printf 'PROJECT_FOUNDRY_HOSTED_PROVENANCE_PATH=%s\n' "$provenance_path" >> "$GITHUB_ENV"
-      - name: Run semantic reference corpus verbosely
-        run: python -m unittest -v tests.test_semantics_workflow.SemanticReferenceTests
+      - name: Print concise semantic failure
+        shell: bash
+        run: |
+          set +e
+          python -m unittest -v tests.test_semantics_workflow.SemanticReferenceTests > "$RUNNER_TEMP/semantic.log" 2>&1
+          result=$?
+          tail -n 80 "$RUNNER_TEMP/semantic.log"
+          exit "$result"
