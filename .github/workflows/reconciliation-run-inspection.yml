@@ -18,15 +18,15 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          curl -Lsf "https://github.com/$GITHUB_REPOSITORY/archive/c9edf1aed7662eec795cf0dbb33e88a1389c899c.tar.gz" -o "$RUNNER_TEMP/source.tar.gz"
+          curl -Lsf "https://github.com/$GITHUB_REPOSITORY/archive/b9e5a0d151cac37e321c5cfc804befa829699d19.tar.gz" -o "$RUNNER_TEMP/source.tar.gz"
           mkdir source
           tar -xzf "$RUNNER_TEMP/source.tar.gz" --strip-components=1 -C source
-      - name: Print concise semantic failure
+      - name: Print concise workflow failure
         shell: bash
         working-directory: source
         run: |
           set +e
-          python -m unittest -v tests.test_semantics_workflow.SemanticReferenceTests > "$RUNNER_TEMP/semantic.log" 2>&1
+          python -m unittest -v tests.test_semantics_workflow.WorkflowHardeningTests > "$RUNNER_TEMP/workflow.log" 2>&1
           result=$?
-          cat "$RUNNER_TEMP/semantic.log"
+          cat "$RUNNER_TEMP/workflow.log"
           exit "$result"
