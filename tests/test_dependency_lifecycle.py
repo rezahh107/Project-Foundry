@@ -177,13 +177,26 @@ class ProgressCollectionClosureTests(RepairTestBase):
         temporary, target = copy_repo()
         try:
             program = read_json(target, "planning/execution-program.v1.json")
-            task = self.task(program, "PF-002")
-            task["status"] = "blocked"
-            task["blocker"] = {"code": "BLOCK-TEST", "reason": "bounded test blocker", "evidence_refs": ["OBS-TEST"]}
+            foundation = self.task(program, "PF-001")
+            foundation["status"] = "implementation_submitted"
+            foundation["evidence_refs"] = []
+            blocked = self.task(program, "PF-002")
+            blocked["status"] = "blocked"
+            blocked["blocker"] = {"code": "BLOCK-TEST", "reason": "bounded test blocker", "evidence_refs": ["OBS-TEST"]}
             write_json(target, "planning/execution-program.v1.json", program)
+
             state = read_json(target, "planning/current-state.v1.json")
+            state["current_task_status"] = "implementation_submitted"
+            state["evidence_refs"] = []
+            state["last_transition"] = {
+                "from": "planned",
+                "to": "implementation_submitted",
+                "reason": "isolated positive fixture",
+                "evidence_refs": [],
+            }
             state["blocked_task_ids"] = ["PF-002"]
             write_json(target, "planning/current-state.v1.json", state)
+
             rendered = run_subprocess_cli(target, "scripts/render_views.py", "--write")
             self.assertEqual(0, rendered.returncode, rendered.stderr)
             self.assertEqual(set(), issue_codes(target))
