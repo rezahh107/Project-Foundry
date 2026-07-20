@@ -5,7 +5,15 @@ import unittest
 from typing import Any, Callable
 
 from scripts.validation_semantics import load_and_validate_structures, validate_semantics
-from tests.support import REPO_ROOT, copy_repo, issue_codes, mutate_json, run_cli
+from tests.support import (
+    REPO_ROOT,
+    copy_repo,
+    issue_codes,
+    mutate_json,
+    read_json,
+    run_cli,
+    write_json,
+)
 
 
 class SemanticReferenceTests(unittest.TestCase):
@@ -150,9 +158,31 @@ class DogfoodingTests(unittest.TestCase):
 
 
 class WorkflowHardeningTests(unittest.TestCase):
+    @staticmethod
+    def _prepare_non_evidence_fixture(target) -> None:
+        program = read_json(target, "planning/execution-program.v1.json")
+        program["tasks"][0]["status"] = "implementation_submitted"
+        program["tasks"][0]["evidence_refs"] = []
+        write_json(target, "planning/execution-program.v1.json", program)
+
+        state = read_json(target, "planning/current-state.v1.json")
+        state["current_task_status"] = "implementation_submitted"
+        state["evidence_refs"] = []
+        state["last_transition"] = {
+            "from": "planned",
+            "to": "implementation_submitted",
+            "reason": "isolated workflow-hardening fixture",
+            "evidence_refs": [],
+        }
+        write_json(target, "planning/current-state.v1.json", state)
+        rendered = run_cli(target, "scripts/render_views.py", "--write")
+        if rendered.returncode != 0:
+            raise AssertionError(rendered.stderr)
+
     def _assert_workflow_drift(self, mutation: Callable[[str], str]) -> None:
         temporary, target = copy_repo()
         try:
+            self._prepare_non_evidence_fixture(target)
             path = target / ".github/workflows/foundation-validation.yml"
             path.write_text(mutation(path.read_text(encoding="utf-8")), encoding="utf-8")
             self.assertIn("PFV-136", issue_codes(target))
