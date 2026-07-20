@@ -19,6 +19,21 @@ from scripts.validation_semantics import load_and_validate_structures, validate_
 REPO_ROOT = Path(__file__).resolve().parents[1]
 STRUCTURAL_FIXTURES = REPO_ROOT / "tests/fixtures/structural_mutations.json"
 CRITICAL_VIEWS = ["PROJECT_CHARTER.md", "SYSTEM_MAP.md", "planning/NEXT_WORK.md"]
+VALIDATION_ENV_KEYS = {
+    "PROJECT_FOUNDRY_EVENT_NAME",
+    "PROJECT_FOUNDRY_EXPECTED_HEAD_SHA",
+    "PROJECT_FOUNDRY_GITHUB_REF",
+    "PROJECT_FOUNDRY_PR_NUMBER",
+    "PROJECT_FOUNDRY_PR_HEAD_SHA",
+    "PROJECT_FOUNDRY_PR_BASE_SHA",
+    "PROJECT_FOUNDRY_PR_HEAD_REF",
+    "PROJECT_FOUNDRY_SYNTHETIC_MERGE_SHA",
+    "PROJECT_FOUNDRY_PUSH_BEFORE_SHA",
+    "PROJECT_FOUNDRY_CURRENT_MAIN_SHA",
+    "PROJECT_FOUNDRY_HOSTED_PROVENANCE_PATH",
+    "GITHUB_ACTIONS",
+    "RUNNER_TEMP",
+}
 
 
 def copy_repo() -> tuple[tempfile.TemporaryDirectory[str], Path]:
@@ -65,20 +80,19 @@ def apply_json_case(root: Path, case: dict[str, Any]) -> None:
     write_json(root, case["file"], document)
 
 
+def current_validation_env() -> dict[str, str]:
+    """Return the exact live validation context for valid-repository boundary tests."""
+    return {
+        key: value
+        for key in VALIDATION_ENV_KEYS
+        if (value := os.environ.get(key)) is not None
+    }
+
+
 @contextmanager
 def patched_env(values: dict[str, str] | None = None) -> Iterator[None]:
     values = values or {}
-    keys = set(values) | {
-        "PROJECT_FOUNDRY_EVENT_NAME",
-        "PROJECT_FOUNDRY_EXPECTED_HEAD_SHA",
-        "PROJECT_FOUNDRY_GITHUB_REF",
-        "PROJECT_FOUNDRY_PR_HEAD_SHA",
-        "PROJECT_FOUNDRY_PR_BASE_SHA",
-        "PROJECT_FOUNDRY_PR_HEAD_REF",
-        "PROJECT_FOUNDRY_SYNTHETIC_MERGE_SHA",
-        "PROJECT_FOUNDRY_PUSH_BEFORE_SHA",
-        "PROJECT_FOUNDRY_CURRENT_MAIN_SHA",
-    }
+    keys = set(values) | VALIDATION_ENV_KEYS
     previous = {key: os.environ.get(key) for key in keys}
     try:
         for key in keys:
@@ -132,9 +146,8 @@ def run_subprocess_cli(
     env: dict[str, str] | None = None,
 ) -> subprocess.CompletedProcess[str]:
     process_env = os.environ.copy()
-    for key in list(process_env):
-        if key.startswith("PROJECT_FOUNDRY_"):
-            process_env.pop(key, None)
+    for key in VALIDATION_ENV_KEYS:
+        process_env.pop(key, None)
     if current_main_sha is not None:
         process_env["PROJECT_FOUNDRY_CURRENT_MAIN_SHA"] = current_main_sha
     process_env.update(env or {})
