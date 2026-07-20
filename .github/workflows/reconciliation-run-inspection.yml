@@ -4,18 +4,36 @@ on:
   pull_request:
 
 permissions:
-  actions: read
   contents: read
 
 jobs:
   inspect:
     runs-on: ubuntu-latest
     env:
-      GH_TOKEN: ${{ github.token }}
+      PROJECT_FOUNDRY_EVENT_NAME: pull_request
+      PROJECT_FOUNDRY_EXPECTED_HEAD_SHA: c9edf1aed7662eec795cf0dbb33e88a1389c899c
+      PROJECT_FOUNDRY_GITHUB_REF: refs/pull/5/merge
+      PROJECT_FOUNDRY_PR_NUMBER: "5"
+      PROJECT_FOUNDRY_PR_HEAD_SHA: c9edf1aed7662eec795cf0dbb33e88a1389c899c
+      PROJECT_FOUNDRY_PR_BASE_SHA: aac56a8becc86fcf1622017c0577b8ce7a2a101a
+      PROJECT_FOUNDRY_PR_HEAD_REF: agent/reconcile-foundation-state
+      PROJECT_FOUNDRY_SYNTHETIC_MERGE_SHA: ""
+      PROJECT_FOUNDRY_PUSH_BEFORE_SHA: ""
     steps:
-      - name: Print latest reconciliation runs
-        shell: bash
+      - name: Check out exact failed Head
+        uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10
+        with:
+          ref: c9edf1aed7662eec795cf0dbb33e88a1389c899c
+          fetch-depth: 0
+          persist-credentials: false
+      - name: Set up Python
+        uses: actions/setup-python@ece7cb06caefa5fff74198d8649806c4678c61a1
+        with:
+          python-version: "3.12"
+      - name: Collect exact hosted context
         run: |
-          set -euo pipefail
-          gh api "repos/$GITHUB_REPOSITORY/actions/workflows/foundation-reconciliation.yml/runs?per_page=10" \
-            --jq '.workflow_runs[] | {id, event, status, conclusion, head_sha, head_branch, run_attempt, created_at}'
+          provenance_path="$RUNNER_TEMP/project-foundry-hosted-provenance.json"
+          python scripts/collect_hosted_provenance.py --root . --output "$provenance_path"
+          printf 'PROJECT_FOUNDRY_HOSTED_PROVENANCE_PATH=%s\n' "$provenance_path" >> "$GITHUB_ENV"
+      - name: Run semantic reference corpus verbosely
+        run: python -m unittest -v tests.test_semantics_workflow.SemanticReferenceTests
