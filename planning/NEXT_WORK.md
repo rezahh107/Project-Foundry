@@ -19,7 +19,7 @@
 
 ### Taskهای داخل Scope
 
-- `PF-001` — Establish governed repository foundation — `implementation_submitted`
+- `PF-001` — Establish governed repository foundation — `validation_pending`
 - `PF-002` — Research and select the MVP dogfooding implementation strategy — `planned`
 - `PF-003` — Run the first self-hosting checkpoint and promote validated foundation lessons — `planned`
 
@@ -32,8 +32,8 @@
 ## وضعیت دقیق کار فعلی
 
 - Task: `PF-001` — Establish governed repository foundation
-- وضعیت canonical: `implementation_submitted`
-- وضعیت ثبت‌شده در برنامه: `implementation_submitted`
+- وضعیت canonical: `validation_pending`
+- وضعیت ثبت‌شده در برنامه: `validation_pending`
 - این Task هنوز کامل نیست مگر پس از `current_main_verified` همراه با Evidence.
 
 ## ابهام‌های ثبت‌شده
@@ -47,4 +47,4 @@
 
 ## دستور عملی بعدی
 
-Review and merge the foundation pull request, then verify the exact current main commit before marking PF-001 complete.
+Complete exact branch validation for PF-001 and record a branch-validation receipt.

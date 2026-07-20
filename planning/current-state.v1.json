@@ -13,19 +13,19 @@
     "PF-001"
   ],
   "current_task_id": "PF-001",
-  "current_task_status": "implementation_submitted",
+  "current_task_status": "validation_pending",
   "completed_task_ids": [],
   "blocked_task_ids": [],
   "next_task_id": "PF-001",
-  "next_action": "Review and merge the foundation pull request, then verify the exact current main commit before marking PF-001 complete.",
+  "next_action": "Complete exact branch validation for PF-001 and record a branch-validation receipt.",
   "evidence_refs": [],
   "uncertainties": [
     "The final MVP dogfooding implementation method is intentionally not selected yet; PF-002 applies Decision Intelligence first."
   ],
   "last_transition": {
-    "from": "planned",
-    "to": "implementation_submitted",
-    "reason": "Foundation implementation prepared on a dedicated branch.",
+    "from": "implementation_submitted",
+    "to": "validation_pending",
+    "reason": "Begin exact branch validation of the merged Foundation implementation and trusted provenance controls.",
     "evidence_refs": []
   }
 }
