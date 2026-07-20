@@ -1,8 +1,10 @@
-# Bootstrap Compatibility Boundary
+# Bootstrap Compatibility Boundaries
 
-Project-Foundry was introduced by pull request #1 before a validator existed on the trusted `main` branch. The first merge therefore cannot satisfy lifecycle rules that were created inside that same pull request.
+Project Foundry was introduced by pull request #1 before a validator existed on the trusted `main` branch. Pull request #2 then repaired the bootstrap validator itself while the Foundation Task still intentionally remained at `implementation_submitted`.
 
-The validator recognizes exactly one historical bootstrap boundary:
+The validator recognizes exactly two immutable historical boundaries. Neither is a reusable lifecycle rule.
+
+## Repository genesis — pull request #1
 
 - base: `d197447598d7108c44e79fbaa57d71e529930052`
 - first canonical Task snapshot: `fd039af9f1771922c185d3595afd975ad93dfd04`
@@ -12,6 +14,15 @@ The validator recognizes exactly one historical bootstrap boundary:
 - Task: `PF-001`
 - initial status: `implementation_submitted`
 
-The exception is accepted only when the exact Git topology, canonical files, hosted merge record, and successful pull-request CI evidence all match those identities. It does not authorize another Task, commit, pull request, repository, status, or merge.
+## Validator-bootstrap repair — pull request #2
 
-All Tasks introduced after this bootstrap must first appear as `planned` with empty evidence. A violation is reported as `PFV-037`.
+- base: `c44ced1d858bd0d1b6d690e47ae12355c79166ca`
+- pull-request Head: `0d997d0429c2e3099e9ec5a09c83eea69f14a6ab`
+- merge commit: `cac31e13815a7c52d436fcf34f65dbe997980a37`
+- pull request: `#2`
+- canonical Task: `PF-001`
+- preserved status: `implementation_submitted`
+
+Each exception is accepted only when its exact Git topology, canonical-file preservation, hosted merge record and successful exact-Head pull-request CI evidence match. The second boundary suppresses only the two known integration false positives caused by merging the validator repair before trusted lifecycle reconciliation.
+
+These exceptions do not authorize another Task, commit, pull request, repository, status or merge. All Tasks introduced after repository genesis must first appear as `planned` with empty evidence. A violation is reported as `PFV-037`.

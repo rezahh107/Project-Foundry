@@ -18,10 +18,14 @@ Each invalid-state class has one primary owner. Structural validation protects c
 | Current branch-validation receipt shape and PR context | `BRANCH_PROVENANCE` | `PFV-084` |
 | Current-main receipt shape and exact main-push context | `CURRENT_MAIN_PROVENANCE` | `PFV-085` |
 | Required predecessor receipt, receipt digest, historical exact-SHA CI, and transitive evidence-chain validity | `TRANSITIVE_EVIDENCE_CHAIN` | `PFV-086` |
-| Hosted Merge identity and Merge-receipt binding | `HOSTED_MERGE_TRUTH` | `PFV-087` |
+| Hosted Merge identity and Merge-receipt binding inside compatibility validation | `HOSTED_MERGE_TRUTH` | `PFV-087` |
+| Hosted evidence producer is external, immutable and activated by exact SHA | `EXTERNAL_ATTESTOR_TRUST_ROOT` | `PFV-088` |
+| Canonical CI identity includes workflow ID/path/bytes, run attempt, repository, event and PR/push association | `EXTERNAL_ATTESTOR_CI_IDENTITY` | `PFV-089` |
 | Decision Intelligence process rules | `CROSS_DOCUMENT_SEMANTICS` | `PFV-060`–`PFV-069` |
 | Dogfooding authority and promotion rules | `CROSS_DOCUMENT_SEMANTICS` | `PFV-070`–`PFV-073` |
-| Deterministic workflow projection | `WORKFLOW_PARITY_GATE` | `PFV-136` |
+| Deterministic Foundation workflow projection | `WORKFLOW_PARITY_GATE` | `PFV-136` |
+| Deterministic trusted-provenance workflow projection | `WORKFLOW_PARITY_GATE` | `PFV-137` |
+| Unique canonical workflow names and paths | `WORKFLOW_IDENTITY_GATE` | `PFV-138` |
 
 ## Supported integration policy
 
@@ -45,7 +49,11 @@ A status string is never evidence. The validator reconstructs the historical tra
 
 ## Hosted evidence boundary
 
-`scripts/collect_hosted_provenance.py` reads public, read-only GitHub REST data without repository credentials. It writes a temporary evidence envelope under `RUNNER_TEMP`, outside the repository. Production hosted evidence is accepted only inside GitHub Actions, from that external runner-temporary path, with exact repository and schema identities. Test fixtures require `PROJECT_FOUNDRY_TEST_MODE=1`.
+The acceptance trust root is the external action pinned in `.github/workflows/trusted-provenance.yml`. It runs from `Post-Merge-Auditor` at an immutable commit, executes no target-repository code, and validates the exact Foundation workflow ID, path and approved byte digest plus the exact PR or `main` push association.
+
+The `workflow_run` definition is loaded from Project Foundry's default branch, so an evaluated PR cannot replace the judge used for its own run. Duplicate canonical workflow display names or paths are rejected by `PFV-138`.
+
+`scripts/collect_hosted_provenance.py` and its `RUNNER_TEMP` envelope remain compatibility carriers for internal historical validation. They are not the independent attestation authority and cannot alone authorize Merge or completion.
 
 ## Test layers
 
@@ -53,3 +61,4 @@ A status string is never evidence. The validator reconstructs the historical tra
 2. Semantic tests assert stable repository-domain diagnostics.
 3. Real-Git tests create commits, branches, two-parent merges, multi-commit pushes, and receipt chains.
 4. Hosted-evidence fixtures test PR identity, workflow conclusions, direct-push rejection, and supported merge boundaries.
+5. External-attestor tests reject display-name decoys, wrong workflow ID/path/bytes, stale attempts, wrong PR associations, non-main pushes and unhosted merge claims.
