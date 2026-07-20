@@ -5,7 +5,15 @@ import unittest
 from pathlib import Path
 from typing import Any, Callable
 
-from tests.support import REPO_ROOT, copy_repo, issue_codes, read_json, run_subprocess_cli, write_json
+from tests.support import (
+    REPO_ROOT,
+    copy_repo,
+    current_validation_env,
+    issue_codes,
+    read_json,
+    run_subprocess_cli,
+    write_json,
+)
 
 
 def receipt(
@@ -93,7 +101,10 @@ class DependencySatisfactionTests(RepairTestBase):
                 self.assert_invalid(lambda root, d=dependency_status, s=task_status: mutate(root, d, s), "PFV-033")
 
     def test_planned_future_task_may_retain_unresolved_dependencies(self) -> None:
-        self.assertNotIn("PFV-033", issue_codes(REPO_ROOT))
+        self.assertNotIn(
+            "PFV-033",
+            issue_codes(REPO_ROOT, env=current_validation_env()),
+        )
 
 
 class NextTaskDispatchTests(RepairTestBase):
@@ -102,7 +113,10 @@ class NextTaskDispatchTests(RepairTestBase):
         self.assert_invalid(lambda root: self.mutate_state(root, lambda state: state.__setitem__("next_task_id", "PF-002")), "PFV-046")
 
     def test_current_unfinished_task_is_valid_next_task(self) -> None:
-        self.assertEqual(set(), issue_codes(REPO_ROOT))
+        self.assertEqual(
+            set(),
+            issue_codes(REPO_ROOT, env=current_validation_env()),
+        )
 
 
 class LifecycleTransitionTests(RepairTestBase):
