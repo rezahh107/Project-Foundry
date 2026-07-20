@@ -1,4 +1,4 @@
-# One-time owner-authorized activation with fail-closed resume support.
+# One-time owner-authorized PF-001 lifecycle reconciliation.
 name: Foundation reconciliation
 
 on:
@@ -20,7 +20,7 @@ permissions:
 
 jobs:
   initialize-reconciliation:
-    name: Create exact PF-001 reconciliation PR
+    name: Build exact PF-001 reconciliation history
     if: ${{ github.event_name == 'push' }}
     runs-on: ubuntu-latest
     env:
@@ -33,59 +33,48 @@ jobs:
           ref: ${{ github.sha }}
           fetch-depth: 0
           persist-credentials: true
-      - name: Create, resume, or approve validated branch receipt
+      - name: Rebuild and authorize the exact branch receipt
         shell: bash
         run: |
           set -euo pipefail
           git config user.name 'Project Foundry Reconciler'
           git config user.email 'project-foundry-reconciler@users.noreply.github.com'
 
-          if git ls-remote --exit-code --heads origin "$RECONCILIATION_BRANCH" >/dev/null 2>&1; then
-            git fetch origin "$RECONCILIATION_BRANCH"
-            git switch -C "$RECONCILIATION_BRANCH" "origin/$RECONCILIATION_BRANCH"
-            status="$(python - <<'PY'
-          import json
-          data=json.load(open('planning/current-state.v1.json', encoding='utf-8'))
-          print(data['current_task_status'])
-          PY
-            )"
-            subject_sha="$(git rev-parse HEAD)"
-            if [[ "$status" == 'validation_pending' ]]; then
-              pr_number="$(gh pr list --repo "$GITHUB_REPOSITORY" --head "$RECONCILIATION_BRANCH" --state open --json number --jq 'if length == 1 then .[0].number else error("expected one open reconciliation PR") end')"
-              python scripts/foundation_reconcile.py validated-on-branch \
-                --subject-sha "$subject_sha" \
-                --pr-number "$pr_number" \
-                --branch "$RECONCILIATION_BRANCH"
-              git add planning/execution-program.v1.json planning/current-state.v1.json PROJECT_CHARTER.md SYSTEM_MAP.md planning/NEXT_WORK.md
-              git commit -m 'Record exact PF-001 branch validation receipt'
-              git push origin "HEAD:$RECONCILIATION_BRANCH"
-              exit 0
-            fi
-            if [[ "$status" == 'validated_on_branch' ]]; then
-              run_id="$(gh api "repos/$GITHUB_REPOSITORY/actions/workflows/315675709/runs?event=pull_request&head_sha=$subject_sha&per_page=20" --jq '.workflow_runs | map(select(.conclusion == "action_required")) | if length == 1 then .[0].id else error("expected one action-required exact-Head run") end')"
-              gh api --method POST "repos/$GITHUB_REPOSITORY/actions/runs/$run_id/approve"
-              exit 0
-            fi
-            echo "unexpected existing reconciliation status: $status" >&2
-            exit 1
-          fi
+          approve_exact_head() {
+            local head_sha="$1"
+            local run_id=""
+            for _ in $(seq 1 30); do
+              run_id="$(gh api "repos/$GITHUB_REPOSITORY/actions/workflows/315675709/runs?event=pull_request&head_sha=$head_sha&per_page=20" --jq '.workflow_runs | map(select(.conclusion == "action_required")) | if length > 0 then .[0].id else "" end')"
+              if [[ -n "$run_id" ]]; then
+                gh api --method POST "repos/$GITHUB_REPOSITORY/actions/runs/$run_id/approve"
+                echo "Approved exact-Head Foundation run $run_id for $head_sha"
+                return 0
+              fi
+              sleep 2
+            done
+            echo "No action-required exact-Head run appeared for $head_sha" >&2
+            return 1
+          }
 
-          git switch -c "$RECONCILIATION_BRANCH"
+          pr_number="$(gh pr list --repo "$GITHUB_REPOSITORY" --head "$RECONCILIATION_BRANCH" --state open --json number --jq 'if length == 1 then .[0].number else error("expected one open reconciliation PR") end')"
+          git fetch origin main "$RECONCILIATION_BRANCH"
+          git switch -C "$RECONCILIATION_BRANCH" origin/main
+
           python scripts/foundation_reconcile.py validation-pending
           git add planning/execution-program.v1.json planning/current-state.v1.json PROJECT_CHARTER.md SYSTEM_MAP.md planning/NEXT_WORK.md
           git commit -m 'Transition PF-001 to validation pending'
           git commit --allow-empty -m 'Establish immutable branch validation subject'
           subject_sha="$(git rev-parse HEAD)"
-          git push --set-upstream origin "$RECONCILIATION_BRANCH"
-          pr_url="$(gh pr create --repo "$GITHUB_REPOSITORY" --base main --head "$RECONCILIATION_BRANCH" --title 'Reconcile PF-001 and activate PF-002' --body 'This owner-authorized lifecycle PR records exact branch validation, advances PF-001 to merge_pending only after canonical CI and external attestation, and enables evidence-bound post-Merge reconciliation. It does not alter the North Star, Program identity, Scope identity, or DEC-002.')"
-          pr_number="$(gh pr view "$pr_url" --repo "$GITHUB_REPOSITORY" --json number --jq .number)"
+
           python scripts/foundation_reconcile.py validated-on-branch \
             --subject-sha "$subject_sha" \
             --pr-number "$pr_number" \
             --branch "$RECONCILIATION_BRANCH"
           git add planning/execution-program.v1.json planning/current-state.v1.json PROJECT_CHARTER.md SYSTEM_MAP.md planning/NEXT_WORK.md
           git commit -m 'Record exact PF-001 branch validation receipt'
-          git push origin "$RECONCILIATION_BRANCH"
+          receipt_head="$(git rev-parse HEAD)"
+          git push --force-with-lease="refs/heads/$RECONCILIATION_BRANCH" origin "HEAD:$RECONCILIATION_BRANCH"
+          approve_exact_head "$receipt_head"
 
   advance-reconciliation:
     name: Advance externally attested PF-001 lifecycle
@@ -94,6 +83,7 @@ jobs:
     env:
       GH_TOKEN: ${{ github.token }}
       RECONCILIATION_BRANCH: agent/reconcile-foundation-state
+      RECEIPT_BRANCH: agent/pf001-main-receipts
       RUN_EVENT: ${{ github.event.workflow_run.event }}
       RUN_HEAD_SHA: ${{ github.event.workflow_run.head_sha }}
       RUN_HEAD_BRANCH: ${{ github.event.workflow_run.head_branch }}
@@ -119,7 +109,7 @@ jobs:
           ref: ${{ github.event.workflow_run.head_sha }}
           fetch-depth: 0
           persist-credentials: true
-      - name: Advance lifecycle or merge exact PR Head
+      - name: Advance lifecycle without bot-authored Merge or main push
         shell: bash
         run: |
           set -euo pipefail
@@ -127,6 +117,23 @@ jobs:
           test "$actual_sha" = "$RUN_HEAD_SHA"
           git config user.name 'Project Foundry Reconciler'
           git config user.email 'project-foundry-reconciler@users.noreply.github.com'
+
+          approve_exact_head() {
+            local head_sha="$1"
+            local run_id=""
+            for _ in $(seq 1 30); do
+              run_id="$(gh api "repos/$GITHUB_REPOSITORY/actions/workflows/315675709/runs?event=pull_request&head_sha=$head_sha&per_page=20" --jq '.workflow_runs | map(select(.conclusion == "action_required")) | if length > 0 then .[0].id else "" end')"
+              if [[ -n "$run_id" ]]; then
+                gh api --method POST "repos/$GITHUB_REPOSITORY/actions/runs/$run_id/approve"
+                echo "Approved exact-Head Foundation run $run_id for $head_sha"
+                return 0
+              fi
+              sleep 2
+            done
+            echo "No action-required exact-Head run appeared for $head_sha" >&2
+            return 1
+          }
+
           status="$(python - <<'PY'
           import json
           data=json.load(open('planning/current-state.v1.json', encoding='utf-8'))
@@ -141,10 +148,11 @@ jobs:
               python scripts/foundation_reconcile.py merge-pending
               git add planning/execution-program.v1.json planning/current-state.v1.json PROJECT_CHARTER.md SYSTEM_MAP.md planning/NEXT_WORK.md
               git commit -m 'Advance externally attested PF-001 to merge pending'
+              merge_pending_head="$(git rev-parse HEAD)"
               git push origin "HEAD:$RECONCILIATION_BRANCH"
+              approve_exact_head "$merge_pending_head"
             elif [[ "$status" == 'merge_pending' ]]; then
-              response="$(gh api --method PUT "repos/$GITHUB_REPOSITORY/pulls/$RUN_PR_NUMBER/merge" -f merge_method=merge -f sha="$RUN_HEAD_SHA")"
-              python -c 'import json,sys; data=json.load(sys.stdin); assert data.get("merged") is True, data' <<<"$response"
+              echo "Exact PR Head is ready for owner-authenticated merge: $RUN_HEAD_SHA"
             fi
             exit 0
           fi
@@ -171,11 +179,11 @@ jobs:
                 --pr-number "$pr_number"
               git add planning/execution-program.v1.json planning/current-state.v1.json PROJECT_CHARTER.md SYSTEM_MAP.md planning/NEXT_WORK.md
               git commit -m 'Record hosted Merge receipt for PF-001'
-              git push origin HEAD:main
+              git push --force origin "HEAD:$RECEIPT_BRANCH"
             elif [[ "$status" == 'merged' ]]; then
               python scripts/foundation_reconcile.py current-main-verified
               git add -A
               git commit -m 'Verify PF-001 on current main and activate PF-002'
-              git push origin HEAD:main
+              git push --force origin "HEAD:$RECEIPT_BRANCH"
             fi
           fi
