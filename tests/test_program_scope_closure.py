@@ -8,6 +8,7 @@ from typing import Any, Callable
 from tests.support import (
     REPO_ROOT,
     copy_repo,
+    current_validation_env,
     issue_codes,
     read_json,
     run_cli,
@@ -178,7 +179,10 @@ class ScopeMembershipClosureTests(ClosureTestBase):
         self.assertEqual("future_scope", task["scope_ref"])
         self.assertNotIn(task["id"], scope["included_task_ids"])
         self.assertNotIn(task["work_package_id"], scope["included_work_package_ids"])
-        self.assertEqual(set(), issue_codes(REPO_ROOT))
+        self.assertEqual(
+            set(),
+            issue_codes(REPO_ROOT, env=current_validation_env()),
+        )
 
 
 class RendererTaskSetCompletenessTests(unittest.TestCase):
