@@ -1,0 +1,33 @@
+name: Bootstrap diagnostics
+
+on:
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  diagnose:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10
+        with:
+          ref: ${{ github.event.pull_request.head.sha }}
+          persist-credentials: false
+          fetch-depth: 0
+          show-progress: false
+      - uses: actions/setup-python@ece7cb06caefa5fff74198d8649806c4678c61a1
+        with:
+          python-version: "3.12"
+      - name: Check workflow-only contract
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          from scripts.validation_workflow import validate_workflow
+          issues = validate_workflow(Path('.'))
+          for issue in issues:
+              print(f"{issue.code}: {issue.message}")
+          raise SystemExit(bool(issues))
+          PY
+      - name: Run complete validator without hosted context
+        run: python scripts/validate_repository.py --root .
