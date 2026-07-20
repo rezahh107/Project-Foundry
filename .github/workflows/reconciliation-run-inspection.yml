@@ -1,0 +1,21 @@
+name: Reconciliation run inspection
+
+on:
+  pull_request:
+
+permissions:
+  actions: read
+  contents: read
+
+jobs:
+  inspect:
+    runs-on: ubuntu-latest
+    env:
+      GH_TOKEN: ${{ github.token }}
+    steps:
+      - name: Print reconciliation workflow runs
+        shell: bash
+        run: |
+          set -euo pipefail
+          gh api "repos/$GITHUB_REPOSITORY/actions/workflows/foundation-reconciliation.yml/runs?per_page=20" \
+            --jq '.workflow_runs[] | {id, event, status, conclusion, head_sha, head_branch, run_attempt, created_at}'
