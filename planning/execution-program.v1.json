@@ -96,7 +96,7 @@
       "id": "PF-001",
       "work_package_id": "WP-01",
       "title": "Establish governed repository foundation",
-      "status": "validation_pending",
+      "status": "validated_on_branch",
       "depends_on": [],
       "scope_ref": "PF-SCOPE-001@0.1.0",
       "acceptance_criteria": [
@@ -105,7 +105,24 @@
         "Cross-file validator and CI workflow pass.",
         "Completion is not claimed before current-main verification."
       ],
-      "evidence_refs": []
+      "evidence_refs": [
+        {
+          "receipt_type": "git_history_attestation",
+          "receipt_version": "git-history-attestation.v2",
+          "verification_type": "branch_validation",
+          "subject_kind": "pull_request_head",
+          "repository": "rezahh107/Project-Foundry",
+          "ref": "refs/heads/agent/reconcile-foundation-state",
+          "subject_sha": "35c2a86236839b20962fb3d7df121f6eda519481",
+          "transition_from": "validation_pending",
+          "transition_to": "validated_on_branch",
+          "predecessor_receipt_sha256": null,
+          "pr_number": 5,
+          "pr_head_sha": null,
+          "integration_sha": null,
+          "merge_method": null
+        }
+      ]
     },
     {
       "id": "PF-002",

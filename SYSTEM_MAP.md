@@ -8,7 +8,7 @@
 
 - `WP-01` — **Genesis, Constitution, Progress, Decisions, and Dogfooding**
   - Objective: Establish repository-native memory and controls before domain pipeline implementation.
-  - `PF-001` — Establish governed repository foundation (`validation_pending`)
+  - `PF-001` — Establish governed repository foundation (`validated_on_branch`)
   - `PF-002` — Research and select the MVP dogfooding implementation strategy (`planned`)
   - `PF-003` — Run the first self-hosting checkpoint and promote validated foundation lessons (`planned`)
 - `WP-02` — **Idea Maturation Pipeline**
