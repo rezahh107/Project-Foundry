@@ -1,4 +1,4 @@
-"""Identity-bound compatibility for the two post-genesis bootstrap merges."""
+"""Identity-bound compatibility for the three post-genesis bootstrap merges."""
 from __future__ import annotations
 
 import json
@@ -29,6 +29,11 @@ TRUST_BASE_COMMIT = "cac31e13815a7c52d436fcf34f65dbe997980a37"
 TRUST_PR_HEAD = "01ead12c071d925de5e98994116afe66f830ac47"
 TRUST_INTEGRATION_COMMIT = "6cebe25fec6bac15b9aa82eedc8a4cdc1a7eebe3"
 TRUST_PR_NUMBER = 3
+
+RECONCILIATION_BASE_COMMIT = "27f95557416a706f52c60df75fa9e4277c978929"
+RECONCILIATION_PR_HEAD = "fff94ce52ffb1fbc0ac563aa1c20eeed1c1edc7a"
+RECONCILIATION_INTEGRATION_COMMIT = "eb94ea2e5e2427b492b77948b6e53c9ddf2d709d"
+RECONCILIATION_PR_NUMBER = 5
 
 
 def _git(root: Path, *args: str) -> subprocess.CompletedProcess[str]:
@@ -130,6 +135,7 @@ def _exact_boundary_valid(
     record = records[0]
     merge_valid = (
         record.get("repository") == REPOSITORY
+        and record.get("integration_sha") == integration
         and record.get("merge_commit_sha") == integration
         and record.get("merged") is True
         and record.get("merge_method") == "merge_commit"
@@ -169,6 +175,16 @@ def _exact_trust_boundary_valid(root: Path) -> bool:
     )
 
 
+def _exact_reconciliation_boundary_valid(root: Path) -> bool:
+    return _exact_boundary_valid(
+        root,
+        base=RECONCILIATION_BASE_COMMIT,
+        pr_head=RECONCILIATION_PR_HEAD,
+        integration=RECONCILIATION_INTEGRATION_COMMIT,
+        pr_number=RECONCILIATION_PR_NUMBER,
+    )
+
+
 def _allowed_for(integration: str) -> set[tuple[str, str]]:
     return {
         (
@@ -185,13 +201,15 @@ def _allowed_for(integration: str) -> set[tuple[str, str]]:
 def apply_followup_bootstrap_compatibility(
     root: Path, issues: list[ValidationIssue]
 ) -> list[ValidationIssue]:
-    """Suppress only exact, evidence-bound false positives from PR #2 and PR #3."""
+    """Suppress only exact, evidence-bound false positives from PR #2, #3, and #5."""
     root = root.resolve()
     allowed: set[tuple[str, str]] = set()
     if _exact_repair_boundary_valid(root):
         allowed.update(_allowed_for(REPAIR_INTEGRATION_COMMIT))
     if _exact_trust_boundary_valid(root):
         allowed.update(_allowed_for(TRUST_INTEGRATION_COMMIT))
+    if _exact_reconciliation_boundary_valid(root):
+        allowed.update(_allowed_for(RECONCILIATION_INTEGRATION_COMMIT))
     if not allowed:
         return list(issues)
     return [issue for issue in issues if (issue.code, issue.message) not in allowed]
