@@ -19,7 +19,7 @@
 
 ### Taskهای داخل Scope
 
-- `PF-001` — Establish governed repository foundation — `validated_on_branch`
+- `PF-001` — Establish governed repository foundation — `merge_pending`
 - `PF-002` — Research and select the MVP dogfooding implementation strategy — `planned`
 - `PF-003` — Run the first self-hosting checkpoint and promote validated foundation lessons — `planned`
 
@@ -32,8 +32,8 @@
 ## وضعیت دقیق کار فعلی
 
 - Task: `PF-001` — Establish governed repository foundation
-- وضعیت canonical: `validated_on_branch`
-- وضعیت ثبت‌شده در برنامه: `validated_on_branch`
+- وضعیت canonical: `merge_pending`
+- وضعیت ثبت‌شده در برنامه: `merge_pending`
 - این Task هنوز کامل نیست مگر پس از `current_main_verified` همراه با Evidence.
 
 ## ابهام‌های ثبت‌شده
@@ -47,4 +47,4 @@
 
 ## دستور عملی بعدی
 
-Advance the exact validated branch to merge_pending after its canonical CI and external attestation succeed.
+Merge this exact PR Head with the supported two-parent merge-commit method.
