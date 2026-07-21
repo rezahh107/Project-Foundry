@@ -20,11 +20,18 @@ jobs:
           git remote add origin "https://github.com/$GITHUB_REPOSITORY.git"
           git fetch -q --no-tags origin '+refs/heads/*:refs/remotes/origin/*'
           git checkout -q --detach "$TARGET_SHA"
-      - name: Print bounded compatibility facts
+      - name: Print bounded compatibility facts and validator result
         shell: bash
         env:
           GITHUB_ACTIONS: "true"
           PROJECT_FOUNDRY_TEST_MODE: "0"
+          PROJECT_FOUNDRY_EVENT_NAME: pull_request
+          PROJECT_FOUNDRY_GITHUB_REF: refs/pull/${{ github.event.pull_request.number }}/merge
+          PROJECT_FOUNDRY_EXPECTED_HEAD_SHA: ${{ github.event.pull_request.head.sha }}
+          PROJECT_FOUNDRY_PR_NUMBER: ${{ github.event.pull_request.number }}
+          PROJECT_FOUNDRY_PR_HEAD_SHA: ${{ github.event.pull_request.head.sha }}
+          PROJECT_FOUNDRY_PR_BASE_SHA: ${{ github.event.pull_request.base.sha }}
+          PROJECT_FOUNDRY_PR_HEAD_REF: ${{ github.event.pull_request.head.ref }}
         run: |
           set -euo pipefail
           path="$RUNNER_TEMP/project-foundry-hosted-provenance.json"
@@ -50,3 +57,9 @@ jobs:
           print('pr_ci_runs=' + json.dumps(runs, sort_keys=True))
           print('boundary_valid=' + str(f._exact_reconciliation_boundary_valid(root)))
           PY
+          set +e
+          python scripts/validate_repository.py --root . > "$RUNNER_TEMP/validator.log" 2>&1
+          result=$?
+          set -e
+          echo "validator_exit=$result"
+          cat "$RUNNER_TEMP/validator.log"
