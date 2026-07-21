@@ -1,0 +1,52 @@
+name: Reconciliation status diagnostics
+
+on:
+  pull_request:
+
+permissions:
+  actions: read
+  contents: read
+
+jobs:
+  inspect:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Print recent reconciliation runs
+        shell: bash
+        env:
+          GH_TOKEN: ${{ github.token }}
+          SUBJECT_SHA: e1ed04eb69b440bf5ae5ba84773fca33591f390e
+        run: |
+          set -euo pipefail
+          python - <<'PY'
+          import json, os, urllib.request
+
+          request = urllib.request.Request(
+              f"https://api.github.com/repos/{os.environ['GITHUB_REPOSITORY']}/actions/runs?per_page=50",
+              headers={
+                  "Accept": "application/vnd.github+json",
+                  "Authorization": f"Bearer {os.environ['GH_TOKEN']}",
+                  "X-GitHub-Api-Version": "2022-11-28",
+                  "User-Agent": "Project-Foundry-Reconciliation-Diagnostics",
+              },
+          )
+          with urllib.request.urlopen(request, timeout=30) as response:
+              payload = json.load(response)
+          subject = os.environ['SUBJECT_SHA']
+          selected = []
+          for run in payload.get('workflow_runs', []):
+              if run.get('name') in {'Foundation reconciliation', 'Trusted provenance', 'Foundation validation'}:
+                  selected.append({
+                      'id': run.get('id'),
+                      'name': run.get('name'),
+                      'event': run.get('event'),
+                      'status': run.get('status'),
+                      'conclusion': run.get('conclusion'),
+                      'head_sha': run.get('head_sha'),
+                      'head_branch': run.get('head_branch'),
+                      'run_attempt': run.get('run_attempt'),
+                      'created_at': run.get('created_at'),
+                      'subject_match': run.get('head_sha') == subject,
+                  })
+          print(json.dumps(selected[:20], indent=2, sort_keys=True))
+          PY
