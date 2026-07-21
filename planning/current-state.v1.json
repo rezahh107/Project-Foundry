@@ -13,11 +13,11 @@
     "PF-001"
   ],
   "current_task_id": "PF-001",
-  "current_task_status": "validated_on_branch",
+  "current_task_status": "merge_pending",
   "completed_task_ids": [],
   "blocked_task_ids": [],
   "next_task_id": "PF-001",
-  "next_action": "Advance the exact validated branch to merge_pending after its canonical CI and external attestation succeed.",
+  "next_action": "Merge this exact PR Head with the supported two-parent merge-commit method.",
   "evidence_refs": [
     {
       "receipt_type": "git_history_attestation",
@@ -40,9 +40,9 @@
     "The final MVP dogfooding implementation method is intentionally not selected yet; PF-002 applies Decision Intelligence first."
   ],
   "last_transition": {
-    "from": "validation_pending",
-    "to": "validated_on_branch",
-    "reason": "The exact immutable branch subject passed the canonical Foundation validation workflow.",
+    "from": "validated_on_branch",
+    "to": "merge_pending",
+    "reason": "The exact PR Head has successful canonical CI and external hosted-provenance attestation.",
     "evidence_refs": [
       {
         "receipt_type": "git_history_attestation",

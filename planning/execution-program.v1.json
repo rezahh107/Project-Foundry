@@ -96,7 +96,7 @@
       "id": "PF-001",
       "work_package_id": "WP-01",
       "title": "Establish governed repository foundation",
-      "status": "validated_on_branch",
+      "status": "merge_pending",
       "depends_on": [],
       "scope_ref": "PF-SCOPE-001@0.1.0",
       "acceptance_criteria": [
