@@ -10,7 +10,7 @@ TRUSTED_ATTESTOR_PIN = "662fd78c4ee08bd5aeb3e68aee84f5d970a85ef4"
 
 
 def render_trusted_provenance_workflow() -> str:
-    return """name: Trusted provenance
+    rendered = """name: Trusted provenance
 
 on:
   workflow_run:
@@ -44,7 +44,8 @@ jobs:
           expected-pr-number: ${{ github.event.workflow_run.pull_requests[0].number || '' }}
           expected-head-ref: ${{ github.event.workflow_run.head_branch }}
           expected-base-ref: main
- """.replace("__PIN__", TRUSTED_ATTESTOR_PIN)
+  """
+    return rendered.replace("__PIN__", TRUSTED_ATTESTOR_PIN).rstrip() + "\n"
 
 
 def main(argv: list[str] | None = None) -> int:
