@@ -3,6 +3,7 @@ from __future__ import annotations
 
 import json
 import os
+import re
 import subprocess
 from pathlib import Path
 from typing import Any
@@ -19,6 +20,7 @@ SCOPE_PATH = "planning/scope-baseline.v1.json"
 HOSTED_SCHEMA = "project-foundry-hosted-provenance.v1"
 HOSTED_SOURCE = "github_rest_v2022_11_28"
 WORKFLOW_NAME = "Foundation validation"
+SHA40 = re.compile(r"^[0-9a-f]{40}$")
 
 REPAIR_BASE_COMMIT = "c44ced1d858bd0d1b6d690e47ae12355c79166ca"
 REPAIR_PR_HEAD = "0d997d0429c2e3099e9ec5a09c83eea69f14a6ab"
@@ -34,6 +36,7 @@ RECONCILIATION_BASE_COMMIT = "27f95557416a706f52c60df75fa9e4277c978929"
 RECONCILIATION_PR_HEAD = "fff94ce52ffb1fbc0ac563aa1c20eeed1c1edc7a"
 RECONCILIATION_INTEGRATION_COMMIT = "eb94ea2e5e2427b492b77948b6e53c9ddf2d709d"
 RECONCILIATION_PR_NUMBER = 5
+RECONCILIATION_TASK_ID = "PF-001"
 
 
 def _git(root: Path, *args: str) -> subprocess.CompletedProcess[str]:
@@ -185,6 +188,34 @@ def _exact_reconciliation_boundary_valid(root: Path) -> bool:
     )
 
 
+def _unchanged_reconciliation_descendant(root: Path, commit: str) -> bool:
+    """Accept only first-parent descendants whose canonical lifecycle bytes are unchanged."""
+    if SHA40.fullmatch(commit) is None:
+        return False
+    head = _value(root, "rev-parse", "HEAD")
+    if head is None:
+        return False
+    chain = _value(
+        root,
+        "rev-list",
+        "--first-parent",
+        f"{RECONCILIATION_INTEGRATION_COMMIT}..{head}",
+    )
+    if not chain or commit not in set(chain.splitlines()):
+        return False
+    return _git(
+        root,
+        "diff",
+        "--quiet",
+        RECONCILIATION_INTEGRATION_COMMIT,
+        commit,
+        "--",
+        PROGRAM_PATH,
+        STATE_PATH,
+        SCOPE_PATH,
+    ).returncode == 0
+
+
 def _allowed_for(integration: str) -> set[tuple[str, str]]:
     return {
         (
@@ -198,6 +229,28 @@ def _allowed_for(integration: str) -> set[tuple[str, str]]:
     }
 
 
+def _exact_reconciliation_history_issue(root: Path, issue: ValidationIssue) -> bool:
+    exact = {
+        (
+            "PFV-035",
+            f"task transition at {RECONCILIATION_INTEGRATION_COMMIT} disagrees with trusted prior state implementation_submitted",
+        ),
+        (
+            "PFV-086",
+            f"task receipt at {RECONCILIATION_INTEGRATION_COMMIT} is malformed or mismatched",
+        ),
+    }
+    if (issue.code, issue.message) in exact:
+        return True
+    prefix = (
+        f"task {RECONCILIATION_TASK_ID} historical receipt changed "
+        "without a lifecycle transition at "
+    )
+    if issue.code != "PFV-086" or not issue.message.startswith(prefix):
+        return False
+    return _unchanged_reconciliation_descendant(root, issue.message[len(prefix):])
+
+
 def apply_followup_bootstrap_compatibility(
     root: Path, issues: list[ValidationIssue]
 ) -> list[ValidationIssue]:
@@ -208,8 +261,14 @@ def apply_followup_bootstrap_compatibility(
         allowed.update(_allowed_for(REPAIR_INTEGRATION_COMMIT))
     if _exact_trust_boundary_valid(root):
         allowed.update(_allowed_for(TRUST_INTEGRATION_COMMIT))
-    if _exact_reconciliation_boundary_valid(root):
+    reconciliation_valid = _exact_reconciliation_boundary_valid(root)
+    if reconciliation_valid:
         allowed.update(_allowed_for(RECONCILIATION_INTEGRATION_COMMIT))
-    if not allowed:
+    if not allowed and not reconciliation_valid:
         return list(issues)
-    return [issue for issue in issues if (issue.code, issue.message) not in allowed]
+    return [
+        issue
+        for issue in issues
+        if (issue.code, issue.message) not in allowed
+        and not (reconciliation_valid and _exact_reconciliation_history_issue(root, issue))
+    ]
