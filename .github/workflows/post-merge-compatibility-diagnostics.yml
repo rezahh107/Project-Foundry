@@ -16,40 +16,34 @@ jobs:
           ref: ${{ github.event.pull_request.head.sha }}
           fetch-depth: 0
           persist-credentials: false
-      - name: Set up Python
-        uses: actions/setup-python@ece7cb06caefa5fff74198d8649806c4678c61a1
-        with:
-          python-version: "3.12"
-      - name: Collect hosted provenance evidence
-        shell: bash
-        run: |
-          set -euo pipefail
-          path="$RUNNER_TEMP/project-foundry-hosted-provenance.json"
-          python scripts/collect_hosted_provenance.py --root . --output "$path"
-          printf 'PROJECT_FOUNDRY_HOSTED_PROVENANCE_PATH=%s\n' "$path" >> "$GITHUB_ENV"
+          show-progress: false
       - name: Print bounded compatibility facts
         shell: bash
         env:
           GITHUB_ACTIONS: "true"
           PROJECT_FOUNDRY_TEST_MODE: "0"
         run: |
+          set -euo pipefail
+          path="$RUNNER_TEMP/project-foundry-hosted-provenance.json"
+          python scripts/collect_hosted_provenance.py --root . --output "$path" >/dev/null
+          export PROJECT_FOUNDRY_HOSTED_PROVENANCE_PATH="$path"
           python - <<'PY'
           import json
-          import os
           from pathlib import Path
           from scripts import validation_bootstrap_followup as f
 
           root = Path('.').resolve()
           payload = f._hosted_payload(root)
           integration = f.RECONCILIATION_INTEGRATION_COMMIT
-          print('head=', f._value(root, 'rev-parse', 'HEAD'))
-          print('parents=', f._parents(root, integration))
-          print('expected_parents=', [f.RECONCILIATION_BASE_COMMIT, f.RECONCILIATION_PR_HEAD])
-          print('ancestor=', f._ancestor(root, integration, f._value(root, 'rev-parse', 'HEAD') or ''))
-          print('canonical_diff_rc=', f._git(root, 'diff', '--quiet', f.RECONCILIATION_PR_HEAD, integration, '--', f.PROGRAM_PATH, f.STATE_PATH, f.SCOPE_PATH).returncode)
+          head = f._value(root, 'rev-parse', 'HEAD') or ''
           records = [] if payload is None else [r for r in payload['merge_records'] if isinstance(r, dict) and r.get('integration_sha') == integration]
           runs = [] if payload is None else [r for r in payload['ci_runs'] if isinstance(r, dict) and r.get('commit_sha') == f.RECONCILIATION_PR_HEAD]
-          print('merge_records=', json.dumps(records, sort_keys=True))
-          print('pr_ci_runs=', json.dumps(runs, sort_keys=True))
-          print('boundary_valid=', f._exact_reconciliation_boundary_valid(root))
+          print('head=' + head)
+          print('parents=' + json.dumps(f._parents(root, integration)))
+          print('expected_parents=' + json.dumps([f.RECONCILIATION_BASE_COMMIT, f.RECONCILIATION_PR_HEAD]))
+          print('ancestor=' + str(f._ancestor(root, integration, head)))
+          print('canonical_diff_rc=' + str(f._git(root, 'diff', '--quiet', f.RECONCILIATION_PR_HEAD, integration, '--', f.PROGRAM_PATH, f.STATE_PATH, f.SCOPE_PATH).returncode))
+          print('merge_records=' + json.dumps(records, sort_keys=True))
+          print('pr_ci_runs=' + json.dumps(runs, sort_keys=True))
+          print('boundary_valid=' + str(f._exact_reconciliation_boundary_valid(root)))
           PY
