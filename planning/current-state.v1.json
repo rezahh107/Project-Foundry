@@ -25,7 +25,7 @@
       "verification_type": "branch_validation",
       "subject_kind": "pull_request_head",
       "repository": "rezahh107/Project-Foundry",
-    "reason": "Begin exact branch validation of the proposed Foundation implementation and trusted provenance controls.",
+      "ref": "refs/heads/agent/reconcile-foundation-state",
       "subject_sha": "35c2a86236839b20962fb3d7df121f6eda519481",
       "transition_from": "validation_pending",
       "transition_to": "validated_on_branch",
