@@ -10,13 +10,16 @@ jobs:
   diagnose:
     runs-on: ubuntu-latest
     steps:
-      - name: Check out exact triggering head
-        uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10
-        with:
-          ref: ${{ github.event.pull_request.head.sha }}
-          fetch-depth: 0
-          persist-credentials: false
-          show-progress: false
+      - name: Fetch exact triggering head quietly
+        shell: bash
+        env:
+          TARGET_SHA: ${{ github.event.pull_request.head.sha }}
+        run: |
+          set -euo pipefail
+          git init -q .
+          git remote add origin "https://github.com/$GITHUB_REPOSITORY.git"
+          git fetch -q --no-tags origin '+refs/heads/*:refs/remotes/origin/*'
+          git checkout -q --detach "$TARGET_SHA"
       - name: Print bounded compatibility facts
         shell: bash
         env:
