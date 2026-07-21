@@ -13,19 +13,53 @@
     "PF-001"
   ],
   "current_task_id": "PF-001",
-  "current_task_status": "implementation_submitted",
+  "current_task_status": "validated_on_branch",
   "completed_task_ids": [],
   "blocked_task_ids": [],
   "next_task_id": "PF-001",
-  "next_action": "Review and merge the foundation pull request, then verify the exact current main commit before marking PF-001 complete.",
-  "evidence_refs": [],
+  "next_action": "Advance the exact validated branch to merge_pending after its canonical CI and external attestation succeed.",
+  "evidence_refs": [
+    {
+      "receipt_type": "git_history_attestation",
+      "receipt_version": "git-history-attestation.v2",
+      "verification_type": "branch_validation",
+      "subject_kind": "pull_request_head",
+      "repository": "rezahh107/Project-Foundry",
+      "ref": "refs/heads/agent/reconcile-foundation-state",
+      "subject_sha": "35c2a86236839b20962fb3d7df121f6eda519481",
+      "transition_from": "validation_pending",
+      "transition_to": "validated_on_branch",
+      "predecessor_receipt_sha256": null,
+      "pr_number": 5,
+      "pr_head_sha": null,
+      "integration_sha": null,
+      "merge_method": null
+    }
+  ],
   "uncertainties": [
     "The final MVP dogfooding implementation method is intentionally not selected yet; PF-002 applies Decision Intelligence first."
   ],
   "last_transition": {
-    "from": "planned",
-    "to": "implementation_submitted",
-    "reason": "Foundation implementation prepared on a dedicated branch.",
-    "evidence_refs": []
+    "from": "validation_pending",
+    "to": "validated_on_branch",
+    "reason": "The exact immutable branch subject passed the canonical Foundation validation workflow.",
+    "evidence_refs": [
+      {
+        "receipt_type": "git_history_attestation",
+        "receipt_version": "git-history-attestation.v2",
+        "verification_type": "branch_validation",
+        "subject_kind": "pull_request_head",
+        "repository": "rezahh107/Project-Foundry",
+        "ref": "refs/heads/agent/reconcile-foundation-state",
+        "subject_sha": "35c2a86236839b20962fb3d7df121f6eda519481",
+        "transition_from": "validation_pending",
+        "transition_to": "validated_on_branch",
+        "predecessor_receipt_sha256": null,
+        "pr_number": 5,
+        "pr_head_sha": null,
+        "integration_sha": null,
+        "merge_method": null
+      }
+    ]
   }
 }
