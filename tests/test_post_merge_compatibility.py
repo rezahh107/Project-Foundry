@@ -106,7 +106,56 @@ class PostMergeCompatibilityTests(unittest.TestCase):
                 payload = {"merge_records": [self.merge_record], "ci_runs": [ci_run]}
                 self.assertFalse(self._boundary_valid(payload))
 
+    def test_unchanged_first_parent_descendant_is_recognized(self) -> None:
+        commit = "4" * 40
+        head = "5" * 40
+        completed = subprocess.CompletedProcess([], 0, "", "")
+
+        def value(_root: Path, *args: str) -> str | None:
+            if args == ("rev-parse", "HEAD"):
+                return head
+            if args[:2] == ("rev-list", "--first-parent"):
+                return commit
+            return None
+
+        with (
+            patch.object(followup, "_value", side_effect=value),
+            patch.object(followup, "_git", return_value=completed),
+        ):
+            self.assertTrue(followup._unchanged_reconciliation_descendant(self.root, commit))
+
+    def test_changed_or_unrelated_descendant_is_rejected(self) -> None:
+        commit = "4" * 40
+        head = "5" * 40
+
+        def value_without_commit(_root: Path, *args: str) -> str | None:
+            if args == ("rev-parse", "HEAD"):
+                return head
+            if args[:2] == ("rev-list", "--first-parent"):
+                return "6" * 40
+            return None
+
+        with patch.object(followup, "_value", side_effect=value_without_commit):
+            self.assertFalse(followup._unchanged_reconciliation_descendant(self.root, commit))
+
+        def value_with_commit(_root: Path, *args: str) -> str | None:
+            if args == ("rev-parse", "HEAD"):
+                return head
+            if args[:2] == ("rev-list", "--first-parent"):
+                return commit
+            return None
+
+        changed = subprocess.CompletedProcess([], 1, "", "")
+        with (
+            patch.object(followup, "_value", side_effect=value_with_commit),
+            patch.object(followup, "_git", return_value=changed),
+        ):
+            self.assertFalse(followup._unchanged_reconciliation_descendant(self.root, commit))
+
+        self.assertFalse(followup._unchanged_reconciliation_descendant(self.root, "not-a-sha"))
+
     def test_only_exact_known_messages_are_suppressed(self) -> None:
+        descendant = "4" * 40
         exact = [
             ValidationIssue(
                 "PFV-036",
@@ -116,17 +165,48 @@ class PostMergeCompatibilityTests(unittest.TestCase):
                 "PFV-086",
                 f"historical integration {self.integration} lacks a successful exact-SHA push workflow",
             ),
+            ValidationIssue(
+                "PFV-035",
+                f"task transition at {self.integration} disagrees with trusted prior state implementation_submitted",
+            ),
+            ValidationIssue(
+                "PFV-086",
+                f"task receipt at {self.integration} is malformed or mismatched",
+            ),
+            ValidationIssue(
+                "PFV-086",
+                f"task PF-001 historical receipt changed without a lifecycle transition at {descendant}",
+            ),
         ]
         unrelated = [
             ValidationIssue("PFV-036", "integration deadbeef remains invalid"),
             ValidationIssue("PFV-087", "hosted Merge identity is inconsistent"),
+            ValidationIssue(
+                "PFV-086",
+                "task OTHER historical receipt changed without a lifecycle transition at " + descendant,
+            ),
         ]
         with (
             patch.object(followup, "_exact_repair_boundary_valid", return_value=False),
             patch.object(followup, "_exact_trust_boundary_valid", return_value=False),
             patch.object(followup, "_exact_reconciliation_boundary_valid", return_value=True),
+            patch.object(followup, "_unchanged_reconciliation_descendant", return_value=True),
         ):
             self.assertEqual(unrelated, followup.apply_followup_bootstrap_compatibility(self.root, exact + unrelated))
+
+    def test_changed_descendant_issue_is_not_suppressed(self) -> None:
+        descendant = "4" * 40
+        issue = ValidationIssue(
+            "PFV-086",
+            f"task PF-001 historical receipt changed without a lifecycle transition at {descendant}",
+        )
+        with (
+            patch.object(followup, "_exact_repair_boundary_valid", return_value=False),
+            patch.object(followup, "_exact_trust_boundary_valid", return_value=False),
+            patch.object(followup, "_exact_reconciliation_boundary_valid", return_value=True),
+            patch.object(followup, "_unchanged_reconciliation_descendant", return_value=False),
+        ):
+            self.assertEqual([issue], followup.apply_followup_bootstrap_compatibility(self.root, [issue]))
 
     def test_no_suppression_without_exact_boundary(self) -> None:
         issue = ValidationIssue(
