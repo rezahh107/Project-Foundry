@@ -19,7 +19,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Verify external attestation
-        uses: rezahh107/Post-Merge-Auditor/attestors/project_foundry_v1@c17da77665a7ab4416e5084f93cc03c1d3532cba
+        uses: rezahh107/Post-Merge-Auditor/attestors/project_foundry_v1@662fd78c4ee08bd5aeb3e68aee84f5d970a85ef4
         with:
           token: ${{ github.token }}
           repository: ${{ github.repository }}
