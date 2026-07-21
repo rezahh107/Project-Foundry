@@ -227,10 +227,22 @@ def command_validated(args: argparse.Namespace) -> None:
 
 
 def command_merge_pending(_: argparse.Namespace) -> None:
+    program = read_json(PROGRAM_PATH)
+    current_task = task(program)
+    evidence = current_task.get("evidence_refs")
+    if (
+        current_task.get("status") != "validated_on_branch"
+        or not isinstance(evidence, list)
+        or len(evidence) != 1
+        or not isinstance(evidence[0], dict)
+        or evidence[0].get("verification_type") != "branch_validation"
+    ):
+        raise RuntimeError("one valid branch-validation receipt is required")
     set_status(
         "merge_pending",
         "validated_on_branch",
         "The exact PR Head has successful canonical CI and external hosted-provenance attestation.",
+        evidence,
         next_action="Merge this exact PR Head with the supported two-parent merge-commit method.",
     )
 
